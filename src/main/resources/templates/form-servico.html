@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${titulo} ?: 'Formulário'"></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        form { background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 5px; max-width: 700px; }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], select {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        a { color: #007bff; text-decoration: none; margin-top: 15px; display: inline-block; }
+        .erro { color: red; font-weight: bold; }
+
+        /* Estilos para a Receita (Gastos) */
+        fieldset { border: 1px solid #ccc; border-radius: 5px; padding: 15px; }
+        legend { font-weight: bold; }
+        .gasto-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .gasto-item-insumo { flex-grow: 1; }
+        .gasto-item-qtd { width: 120px; }
+        .gasto-item-remove {
+            background-color: #dc3545; width: 40px; text-align: center;
+            padding: 8px 0; cursor: pointer; color: white;
+            border: none; border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h1 th:text="${titulo}"></h1>
+
+<div th:if="${erro}" class="erro">
+    <p th:text="${erro}"></p>
+</div>
+
+<form th:action="@{/servicos/salvar}" method="post" th:object="${servico}">
+
+    <input type="hidden" th:field="*{id}" />
+
+    <div>
+        <label for="nome">Nome do Serviço:</label>
+        <input type="text" id="nome" th:field="*{nome}" placeholder="Ex: Limpeza de Sofá 3 Lugares" />
+    </div>
+
+    <div>
+        <label for="precoVenda">Preço de Venda (R$):</label>
+        <input type="number" id="precoVenda" th:field="*{precoVenda}"
+               step="0.01" min="0" placeholder="Ex: 250.00" />
+    </div>
+
+    <fieldset>
+        <legend>Receita (Gastos de Insumos)</legend>
+
+        <div id="gastos-container">
+
+            <div class="gasto-item" th:each="gasto, stat : *{gastos}">
+                <div class="gasto-item-insumo">
+                    <label>Insumo:</label>
+                    <select th:field="*{gastos[__${stat.index}__].insumoId}">
+                        <option value="">Selecione...</option>
+                        <option th:each="ins : ${insumos}"
+                                th:value="${ins.id}"
+                                th:text="${ins.nome + ' (R$ ' + #numbers.formatDecimal(ins.precoPorUnidade, 1, 'COMMA', 2, 'POINT') + ' / ' + ins.unidadeDeMedida + ')'}">
+                        </option>
+                    </select>
+                </div>
+                <div class="gasto-item-qtd">
+                    <label>Qtd:</label>
+                    <input type="number" step="0.001" min="0" th:field="*{gastos[__${stat.index}__].quantidadeGasta}" />
+                </div>
+                <button type="button" class="gasto-item-remove" onclick="removerGasto(this)">X</button>
+            </div>
+
+        </div>
+
+        <button type="button" id="add-gasto">Adicionar Insumo</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Restrições (Para Otimizador)</legend>
+        <div>
+            <label for="demandaMinima">Demanda Mínima (Obrigação/Contrato):</label>
+            <input type="number" id="demandaMinima" th:field="*{demandaMinima}" step="1" min="0" />
+        </div>
+        <div>
+            <label for="demandaMaxima">Demanda Máxima (Limite de Venda):</label>
+            <input type="number" id="demandaMaxima" th:field="*{demandaMaxima}" step="1" min="0" />
+        </div>
+    </fieldset>
+
+    <div style="margin-top: 20px;">
+        <button type="submit">Salvar Serviço</button>
+    </div>
+
+</form>
+
+<a href="/servicos">Voltar para Lista de Serviços</a>
+
+
+<script th:inline="javascript">
+
+    // 1. Pega a lista de insumos do Model (enviada pelo Controller)
+    // e a transforma em uma variável JavaScript.
+    /*<![CDATA[*/
+    const insumos = /*[[${insumos}]]*/ [];
+    /*]]>*/
+
+    // 2. Pega os elementos do DOM
+    const container = document.getElementById('gastos-container');
+    const addButton = document.getElementById('add-gasto');
+
+    // 3. Função para re-indexar os campos
+    // Isso é PROFISSIONAL. Garante que os nomes dos campos
+    // (ex: gastos[0], gastos[1]) fiquem em ordem, mesmo se
+    // você remover um item do meio da lista.
+    function reindexarGastos() {
+        const items = container.getElementsByClassName('gasto-item');
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+
+            const select = item.querySelector('select');
+            const input = item.querySelector('input[type="number"]');
+
+            // Atualiza os nomes (name) para o índice correto
+            select.name = `gastos[${i}].insumoId`;
+            input.name = `gastos[${i}].quantidadeGasta`;
+        }
+    }
+
+    // 4. Função para ADICIONAR uma nova linha de gasto
+    function adicionarGasto() {
+        // Pega o próximo índice (ex: se tem 2 itens (0, 1), o próximo é 2)
+        const proximoIndice = container.getElementsByClassName('gasto-item').length;
+
+        // Cria o HTML da nova linha
+        const novoItem = document.createElement('div');
+        novoItem.className = 'gasto-item';
+
+        // Cria as opções do <select>
+        let optionsHtml = '<option value="">Selecione...</option>';
+        insumos.forEach(insumo => {
+            // Formatando o preço (JavaScript não tem #numbers.formatDecimal)
+            const precoFormatado = insumo.precoPorUnidade.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+
+            optionsHtml += `<option value="${insumo.id}">
+                                ${insumo.nome} (R$ ${precoFormatado} / ${insumo.unidadeDeMedida})
+                            </option>`;
+        });
+
+        // Define o HTML interno da nova linha
+        novoItem.innerHTML = `
+            <div class="gasto-item-insumo">
+                <label>Insumo:</label>
+                <select name="gastos[${proximoIndice}].insumoId" required>
+                    ${optionsHtml}
+                </select>
+            </div>
+            <div class="gasto-item-qtd">
+                <label>Qtd:</label>
+                <input type="number" step="0.001" min="0" name="gastos[${proximoIndice}].quantidadeGasta" required />
+            </div>
+            <button type="button" class="gasto-item-remove" onclick="removerGasto(this)">X</button>
+        `;
+
+        // Adiciona a nova linha ao container
+        container.appendChild(novoItem);
+    }
+
+    // 5. Função para REMOVER uma linha de gasto
+    function removerGasto(botao) {
+        // Encontra o 'div' pai (a linha inteira) e o remove
+        const itemParaRemover = botao.closest('.gasto-item');
+        itemParaRemover.remove();
+
+        // Re-indexa todos os campos restantes!
+        reindexarGastos();
+    }
+
+    // 6. Registra o "escutador" de evento no botão
+    addButton.addEventListener('click', adicionarGasto);
+
+    // 7. Garante que os itens já existentes (na edição)
+    //    sejam re-indexados ao carregar a página.
+    document.addEventListener('DOMContentLoaded', reindexarGastos);
+
+</script>
+
+</body>
+</html>

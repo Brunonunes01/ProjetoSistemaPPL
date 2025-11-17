@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${titulo} ?: 'Minimizador'"></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { color: #333; }
+        form { background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 5px; max-width: 600px; }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="number"] {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        button { background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #c82333; }
+
+        .navbar {
+            background-color: #f8f9fa; padding: 10px;
+            border-bottom: 1px solid #ddd; margin-bottom: 20px;
+        }
+        .nav-link {
+            margin-right: 15px; font-size: 16px; color: #007bff;
+            text-decoration: none;
+        }
+        .nav-link:hover { text-decoration: underline; }
+        .nav-link.active { font-weight: bold; color: #333; }
+
+        /* Resultados */
+        .resultado { margin-top: 30px; }
+        .resultado h2 { color: #dc3545; }
+        .resultado-custo { font-size: 24px; font-weight: bold; color: red; }
+        .resultado-erro { font-size: 18px; font-weight: bold; color: red; }
+        .resultado-plano { list-style-type: square; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <a href="/insumos" class="nav-link">Gerenciar Insumos</a>
+    <a href="/servicos" class="nav-link">Gerenciar Serviços</a>
+    <a href="/otimizador" class="nav-link">Otimizador (Lucro)</a>
+    <a href="/minimizador" class="nav-link active">Minimizador (Custo)</a>
+</div>
+
+<h1 th:text="${titulo}"></h1>
+
+<h2>1. Insira suas Metas Mínimas de Serviços</h2>
+<form th:action="@{/minimizar}" method="post" th:object="${requestForm}">
+
+    <div th:each="servico, stat : ${servicos}">
+        <label th:text="${'Meta de ' + servico.nome + ' (Custo Unit.: R$ ' + #numbers.formatDecimal(servico.custoTotal, 1, 'COMMA', 2, 'POINT') + ')'}">
+            Meta de Limpeza de Sofá (Custo Unit.: R$ 83,90)
+        </label>
+
+        <input type="hidden" th:field="*{metas[__${stat.index}__].servicoId}" />
+
+        <input type="number" th:field="*{metas[__${stat.index}__].metaMinima}"
+               step="1" min="0" placeholder="Deixe em branco ou 0 se não houver meta" />
+    </div>
+
+    <div>
+        <button type="submit">Calcular Custo Mínimo</button>
+    </div>
+
+</form>
+
+
+<div class="resultado" th:if="${resposta != null}">
+    <hr>
+    <h2>2. Resultado da Minimização</h2>
+
+    <div th:if="${resposta.custoMinimoTotal != null}">
+        <p>O custo mínimo estimado para atingir estas metas é:</p>
+        <p class="resultado-custo"
+           th:text="${'R$ ' + #numbers.formatDecimal(resposta.custoMinimoTotal, 1, 'COMMA', 2, 'POINT')}">
+            R$ 5.000,00
+        </p>
+
+        <h3>Plano de Produção (Exato):</h3>
+        <ul class="resultado-plano">
+            <li th:each="item : ${resposta.planoIdeal}"
+                th:text="${item.nomeServico + ': ' + item.quantidade + ' unidades'}">
+                Limpeza de Sofá: 50 unidades
+            </li>
+        </ul>
+    </div>
+
+    <div th:if="${resposta.mensagem != null && resposta.custoMinimoTotal == null}">
+        <p class="resultado-erro" th:text="${resposta.mensagem}">
+            Erro: Solução impossível.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
