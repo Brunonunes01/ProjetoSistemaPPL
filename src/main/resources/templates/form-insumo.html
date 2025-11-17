@@ -1,66 +1,107 @@
 <!DOCTYPE html>
-<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${titulo} ?: 'Formulário'"></title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        form { background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 5px; max-width: 500px; }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        /* 💡 Aplicando estilo ao <select> também 💡 */
-        input[type="text"], input[type="number"], select {
-            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
-        }
-        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        a { color: #007bff; text-decoration: none; margin-top: 15px; display: inline-block; }
-    </style>
-</head>
-<body>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 
-<h1 th:text="${titulo}"></h1>
+<section layout:fragment="content">
 
-<form th:action="@{/insumos/salvar}" method="post" th:object="${insumo}">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h1 class="h4 mb-0" th:text="${titulo}"></h1>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/insumos/salvar}" method="post" th:object="${insumo}">
 
-    <input type="hidden" th:field="*{id}" />
+                        <input type="hidden" th:field="*{id}"/>
 
-    <div>
-        <label for="nome">Nome do Insumo:</label>
-        <input type="text" id="nome" th:field="*{nome}" placeholder="Ex: Produto Limpador X" />
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome do Insumo:</label>
+                            <input type="text" id="nome" class="form-control" th:field="*{nome}"
+                                   placeholder="Ex: Produto Limpador X"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="unidadeDeMedida" class="form-label">Unidade de Medida:</label>
+                            <select id="unidadeDeMedida" class="form-select" th:field="*{unidadeDeMedida}">
+                                <option value="">Selecione a unidade...</option>
+                                <option th:each="unidade : ${unidades}"
+                                        th:value="${unidade}"
+                                        th:text="${unidade}">Litro
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="precoRecipiente" class="form-label" id="labelPreco">Preço do Recipiente (R$):</label>
+                                <input type="number" id="precoRecipiente" class="form-control" th:field="*{precoRecipiente}"
+                                       step="0.01" min="0" placeholder="Ex: 130.00"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="quantidadeRecipiente" class="form-label" id="labelQtd">Qtd. no Recipiente:</label>
+                                <input type="number" id="quantidadeRecipiente" class="form-control" th:field="*{quantidadeRecipiente}"
+                                       step="0.001" min="0" placeholder="Ex: 5"/>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-success">Salvar Insumo</button>
+                            <a href="/insumos" class="btn btn-secondary">Voltar para Lista</a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div>
-        <label for="precoRecipiente">Preço do Recipiente (R$):</label>
-        <input type="number" id="precoRecipiente" th:field="*{precoRecipiente}"
-               step="0.01" min="0" placeholder="Ex: 130.00" />
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectUnidade = document.getElementById('unidadeDeMedida');
+            const labelPreco = document.getElementById('labelPreco');
+            const labelQtd = document.getElementById('labelQtd');
+            const inputQtd = document.getElementById('quantidadeRecipiente');
 
-    <div>
-        <label for="quantidadeRecipiente">Quantidade no Recipiente:</label>
-        <input type="number" id="quantidadeRecipiente" th:field="*{quantidadeRecipiente}"
-               step="0.001" min="0" placeholder="Ex: 5" />
-    </div>
+            // 💡 AQUI ESTÁ A CORREÇÃO: Lista completa de unidades unitárias
+            const unidadesUnitarias = ['Hora', 'Minuto', 'kWh', 'Unidade(s)', 'km'];
 
-    <div>
-        <label for="unidadeDeMedida">Unidade de Medida:</label>
-        <select id="unidadeDeMedida" th:field="*{unidadeDeMedida}">
-            <option value="">Selecione a unidade...</option>
-            <option th:each="unidade : ${unidades}"
-                    th:value="${unidade}"
-                    th:text="${unidade}">Litro
-            </option>
-        </select>
-    </div>
+            function atualizarFormulario() {
+                const unidadeSelecionada = selectUnidade.value;
 
-    <div>
-        <button type="submit">Salvar Insumo</button>
-    </div>
+                if (unidadesUnitarias.includes(unidadeSelecionada)) {
+                    // Limpa o "(s)" ou "(metro cúbico)" para o rótulo ficar bonito
+                    const unidadeLimpa = unidadeSelecionada.split(' ')[0].replace('(s)', '');
 
-</form>
+                    labelPreco.textContent = `Custo por ${unidadeLimpa} (R$):`;
+                    labelQtd.textContent = `Quantidade de ${unidadeLimpa}s:`;
 
-<a href="/insumos">Voltar para Lista de Insumos</a>
+                    inputQtd.value = '1';
+                    inputQtd.readOnly = true;
+                    inputQtd.style.backgroundColor = '#e9ecef';
+                } else {
+                    // Caso padrão (Litro, kg, ml, g, m³)
+                    labelPreco.textContent = 'Preço do Recipiente (R$):';
+                    labelQtd.textContent = 'Qtd. no Recipiente:';
 
-</body>
+                    inputQtd.readOnly = false;
+                    inputQtd.style.backgroundColor = '#fff';
+
+                    const idInput = document.querySelector('input[name="id"]');
+                    if (!idInput || !idInput.value) {
+                         if (inputQtd.value === '1') {
+                            inputQtd.value = '';
+                         }
+                    }
+                }
+            }
+
+            atualizarFormulario();
+            selectUnidade.addEventListener('change', atualizarFormulario);
+        });
+    </script>
+</section>
 </html>

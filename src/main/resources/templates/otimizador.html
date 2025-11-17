@@ -1,98 +1,83 @@
 <!DOCTYPE html>
-<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${titulo} ?: 'Otimizador'"></title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1, h2 { color: #333; }
-        form { background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 5px; max-width: 600px; }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="number"] {
-            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
-        }
-        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 
-        .navbar {
-            background-color: #f8f9fa; padding: 10px;
-            border-bottom: 1px solid #ddd; margin-bottom: 20px;
-        }
-        .nav-link {
-            margin-right: 15px; font-size: 16px; color: #007bff;
-            text-decoration: none;
-        }
-        .nav-link:hover { text-decoration: underline; }
-        .nav-link.active { font-weight: bold; color: #333; }
+<section layout:fragment="content">
 
-        /* Resultados */
-        .resultado { margin-top: 30px; }
-        .resultado h2 { color: #007bff; }
-        .resultado-lucro { font-size: 24px; font-weight: bold; color: green; }
-        .resultado-erro { font-size: 18px; font-weight: bold; color: red; }
-        .resultado-plano { list-style-type: square; }
-    </style>
-</head>
-<body>
+    <h1 class="mb-4" th:text="${titulo}"></h1>
 
-<div class="navbar">
-    <a href="/insumos" class="nav-link">Gerenciar Insumos</a>
-    <a href="/servicos" class="nav-link">Gerenciar Serviços</a>
-    <a href="/otimizador" class="nav-link active">Otimizador (Lucro)</a> <a href="/minimizador" class="nav-link">Minimizador (Custo)</a> </div>
+    <div class="row g-4">
 
-<h1 th:text="${titulo}"></h1>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">1. Insira seus Limites de Recursos</h2>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/otimizar}" method="post" th:object="${requestForm}">
 
-<h2>1. Insira seus Limites de Recursos</h2>
-<form th:action="@{/otimizar}" method="post" th:object="${requestForm}">
+                        <div th:each="insumo, stat : ${insumos}">
+                            <input type="hidden" th:field="*{limites[__${stat.index}__].insumoId}"/>
 
-    <div th:each="insumo, stat : ${insumos}">
-        <label th:text="${'Total de ' + insumo.nome + ' (' + insumo.unidadeDeMedida + ')'}">
-            Total de Mão de Obra (Horas)
-        </label>
+                            <div class="mb-3">
+                                <label class="form-label" th:for="${'limite' + stat.index}"
+                                       th:text="${'Total de ' + insumo.nome + ' (' + insumo.unidadeDeMedida + ')'}">
+                                    Total de Mão de Obra (Horas)
+                                </label>
+                                <input type="number" th:id="${'limite' + stat.index}" class="form-control"
+                                       th:field="*{limites[__${stat.index}__].totalDisponivel}"
+                                       step="0.1" min="0" placeholder="Deixe em branco se for ilimitado"/>
+                            </div>
+                        </div>
 
-        <input type="hidden" th:field="*{limites[__${stat.index}__].insumoId}" />
+                        <hr>
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">Calcular Plano Ideal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-        <input type="number" th:field="*{limites[__${stat.index}__].totalDisponivel}"
-               step="0.1" min="0" placeholder="Deixe em branco se for ilimitado" />
-    </div>
+        <div class="col-lg-6" th:if="${resposta != null}">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">2. Resultado da Otimização</h2>
+                </div>
+                <div class="card-body">
 
-    <div>
-        <button type="submit">Calcular Plano Ideal</button>
-    </div>
+                    <div th:if="${resposta.lucroMaximo != null}">
+                        <div class="alert alert-success">
+                            <p class="h6 mb-0" th:text="${resposta.mensagem}">Solução ótima encontrada!</p>
+                        </div>
 
-</form>
+                        <p class="text-muted mb-1">O lucro máximo estimado é:</p>
+                        <p class="h2 text-success fw-bold mb-3"
+                           th:text="${'R$ ' + #numbers.formatDecimal(resposta.lucroMaximo, 1, 'COMMA', 2, 'POINT')}">
+                            R$ 8.500,00
+                        </p>
 
+                        <h3 class="h5">Plano de Produção Ideal:</h3>
+                        <ul class="list-group">
+                            <li class="list-group-item" th:each="item : ${resposta.planoIdeal}"
+                                th:text="${item.nomeServico + ': ' + item.quantidadeArredondada + ' unidades'}">
+                                Limpeza de Sofá: 10 unidades
+                            </li>
+                            <li class="list-group-item list-group-item-light" th:if="${resposta.planoIdeal.isEmpty()}">
+                                Nenhum serviço é lucrativo com as restrições dadas.
+                            </li>
+                        </ul>
+                    </div>
 
-<div class="resultado" th:if="${resposta != null}">
-    <hr>
-    <h2>2. Resultado da Otimização</h2>
+                    <div th:if="${resposta.mensagem != null && resposta.lucroMaximo == null}">
+                        <div class="alert alert-danger">
+                            <p class="fw-bold mb-0" th:text="${resposta.mensagem}">
+                                Erro: Solução impossível.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div th:if="${resposta.lucroMaximo != null}">
-        <p>O lucro máximo estimado é:</p>
-        <p class="resultado-lucro"
-           th:text="${'R$ ' + #numbers.formatDecimal(resposta.lucroMaximo, 1, 'COMMA', 2, 'POINT')}">
-            R$ 8.500,00
-        </p>
-
-        <h3>Plano de Produção Ideal:</h3>
-        <ul class="resultado-plano">
-            <li th:each="item : ${resposta.planoIdeal}"
-                th:text="${item.nomeServico + ': ' + item.quantidadeArredondada + ' unidades'}">
-                Limpeza de Sofá: 10 unidades
-            </li>
-            <li th:if="${resposta.planoIdeal.isEmpty()}">
-                Nenhum serviço é lucrativo com as restrições dadas.
-            </li>
-        </ul>
-    </div>
-
-    <div th:if="${resposta.mensagem != null && resposta.lucroMaximo == null}">
-        <p class="resultado-erro" th:text="${resposta.mensagem}">
-            Erro: Solução impossível.
-        </p>
-    </div>
-</div>
-
-</body>
+    </div> </section>
 </html>
