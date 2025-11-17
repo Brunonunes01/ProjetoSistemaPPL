@@ -135,7 +135,7 @@ public class InsumoWebController {
      * (Corrige o erro 404 da página inicial).
      */
     @GetMapping("/")
-    public String redirecionarParaInsumos() {
-        return "redirect:/insumos";
+    public String redirecionarParaServicos() { // Mudei o nome do método
+        return "redirect:/servicos"; // Mudei de /insumos para /servicos
     }
 }

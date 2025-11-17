@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{layout}">
 
 <section layout:fragment="content">
@@ -14,9 +15,9 @@
                 <th>ID</th>
                 <th>Nome do Serviço</th>
                 <th>Preço de Venda (R$)</th>
-                <th>Custo Total (R$)</th>
-                <th>Lucro Unitário (R$)</th>
-                <th>Ações</th>
+                <th sec:authorize="hasRole('ADMIN')">Custo Total (R$)</th>
+                <th sec:authorize="hasRole('ADMIN')">Lucro Unitário (R$)</th>
+                <th sec:authorize="hasRole('ADMIN')">Ações</th>
             </tr>
             </thead>
             <tbody>
@@ -25,10 +26,12 @@
                 <td th:text="${servico.nome}">Limpeza de Sofá</td>
                 <td th:text="${#numbers.formatDecimal(servico.precoVenda, 1, 'COMMA', 2, 'POINT')}">250,00</td>
 
-                <td class="text-danger fw-bold" th:text="${#numbers.formatDecimal(servico.custoTotal, 1, 'COMMA', 2, 'POINT')}">100,00</td>
-                <td class="text-success fw-bold" th:text="${#numbers.formatDecimal(servico.lucroUnitario, 1, 'COMMA', 2, 'POINT')}">150,00</td>
+                <td class="text-danger fw-bold" sec:authorize="hasRole('ADMIN')"
+                    th:text="${#numbers.formatDecimal(servico.custoTotal, 1, 'COMMA', 2, 'POINT')}">100,00</td>
+                <td class="text-success fw-bold" sec:authorize="hasRole('ADMIN')"
+                    th:text="${#numbers.formatDecimal(servico.lucroUnitario, 1, 'COMMA', 2, 'POINT')}">150,00</td>
 
-                <td>
+                <td sec:authorize="hasRole('ADMIN')">
                     <a th:href="@{/servicos/editar/{id}(id=${servico.id})}" class="btn btn-warning btn-sm">Editar</a>
                     <a th:href="@{/servicos/excluir/{id}(id=${servico.id})}" class="btn btn-danger btn-sm">Excluir</a>
                 </td>
@@ -40,7 +43,7 @@
         </table>
     </div>
 
-    <p class="mt-3">
+    <p class="mt-3" sec:authorize="hasRole('ADMIN')">
         <a href="/servicos/novo" class="btn btn-primary">Cadastrar Novo Serviço</a>
     </p>
 
