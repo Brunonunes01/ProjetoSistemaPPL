@@ -3,7 +3,6 @@ package com.projeto.Sistema.business;
 import com.projeto.Sistema.infrastructure.dto.MinimizacaoRequest;
 import com.projeto.Sistema.infrastructure.dto.MinimizacaoResponse;
 import com.projeto.Sistema.infrastructure.dto.ServicoResponse;
-import com.projeto.Sistema.infrastructure.entitys.Servico;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.optim.PointValuePair;
 import org.apache.commons.math3.optim.linear.*;
@@ -86,12 +85,14 @@ public class MinimizacaoService {
             );
         } catch (NoFeasibleSolutionException e) {
             return MinimizacaoResponse.builder()
-                    .mensagem("Erro: Solução impossível. (Este cenário é improvável em minimização simples).")
+                    .mensagem("⚠️ Conflito de Metas: Não é possível atender a todas as metas mínimas simultaneamente " +
+                            "com os recursos/restrições configurados.")
                     .build();
         } catch (UnboundedSolutionException e) {
             // Isso acontece se você não definir NENHUMA meta (custo mínimo é 0 fazendo 0 serviços)
             return MinimizacaoResponse.builder()
-                    .mensagem("Erro: Solução ilimitada. Você precisa definir pelo menos uma meta mínima de serviço.")
+                    .mensagem("⚠️ Nenhuma meta definida: Para minimizar custos, o sistema precisa saber o que você " +
+                            "é obrigado a produzir. Insira pelo menos uma meta maior que zero.")
                     .build();
         }
 

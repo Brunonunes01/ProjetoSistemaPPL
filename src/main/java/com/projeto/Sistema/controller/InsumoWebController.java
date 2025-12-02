@@ -9,12 +9,14 @@ import com.projeto.Sistema.infrastructure.dto.InsumoResponse;
 import lombok.RequiredArgsConstructor;
 
 // Imports do Spring
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 // Imports do Java (para a lista de unidades)
 import java.util.Arrays;
@@ -35,7 +37,6 @@ public class InsumoWebController {
      * Esta lista é usada para popular o dropdown no formulário.
      */
     private List<String> getUnidadesDeMedida() {
-        // 💡 LISTA ATUALIZADA (como você pediu)
         return Arrays.asList(
                 // Líquidos
                 "Litro",
@@ -103,10 +104,20 @@ public class InsumoWebController {
     /**
      * Mapeia a rota "/insumos/excluir/{id}" (GET)
      * Deleta um insumo pelo ID e redireciona de volta para a lista.
+     * Agora com tratamento de erro de integridade.
      */
     @GetMapping("/insumos/excluir/{id}")
-    public String excluirInsumo(@PathVariable Long id) {
-        insumoService.deletarInsumoPorId(id);
+    public String excluirInsumo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            insumoService.deletarInsumoPorId(id);
+            redirectAttributes.addFlashAttribute("sucesso", "Insumo excluído com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            // Captura erro de chave estrangeira (Insumo sendo usado em Serviço)
+            redirectAttributes.addFlashAttribute("erro", "Não é possível excluir este insumo pois ele está sendo utilizado em uma ou mais Receitas de Serviços.");
+        } catch (Exception e) {
+            // Captura erros genéricos (ex: ID não encontrado)
+            redirectAttributes.addFlashAttribute("erro", "Erro ao excluir: " + e.getMessage());
+        }
         return "redirect:/insumos";
     }
 
@@ -117,13 +128,19 @@ public class InsumoWebController {
      * Redireciona de volta para a lista.
      */
     @PostMapping("/insumos/salvar")
-    public String salvarInsumo(@ModelAttribute("insumo") InsumoRequest request) {
-        if (request.getId() == null) {
-            // Se o ID é NULO, é um insumo novo (CREATE)
-            insumoService.salvarInsumo(request);
-        } else {
-            // Se o ID NÃO é nulo, é um insumo existente (UPDATE)
-            insumoService.atualizarInsumo(request.getId(), request);
+    public String salvarInsumo(@ModelAttribute("insumo") InsumoRequest request, RedirectAttributes redirectAttributes) {
+        try {
+            if (request.getId() == null) {
+                // Se o ID é NULO, é um insumo novo (CREATE)
+                insumoService.salvarInsumo(request);
+                redirectAttributes.addFlashAttribute("sucesso", "Insumo cadastrado com sucesso!");
+            } else {
+                // Se o ID NÃO é nulo, é um insumo existente (UPDATE)
+                insumoService.atualizarInsumo(request.getId(), request);
+                redirectAttributes.addFlashAttribute("sucesso", "Insumo atualizado com sucesso!");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erro", "Erro ao salvar insumo: " + e.getMessage());
         }
         return "redirect:/insumos";
     }
@@ -132,10 +149,9 @@ public class InsumoWebController {
     /**
      * Mapeia a rota raiz "/" (GET)
      * Redireciona o usuário da página inicial direto para a lista de insumos.
-     * (Corrige o erro 404 da página inicial).
      */
     @GetMapping("/")
-    public String redirecionarParaServicos() { // Mudei o nome do método
-        return "redirect:/servicos"; // Mudei de /insumos para /servicos
+    public String redirecionarParaServicos() {
+        return "redirect:/servicos";
     }
 }

@@ -13,12 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode; // 💡 <-- ESTA LINHA FOI ADICIONADA
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -121,13 +120,14 @@ public class OtimizacaoService {
             );
         } catch (NoFeasibleSolutionException e) {
             return OtimizacaoResponse.builder()
-                    .mensagem("Erro: Solução impossível. Verifique suas restrições. " +
-                            "Você pode ter recursos insuficientes para cumprir a demanda mínima.")
+                    .mensagem("⚠️ Não foi possível encontrar uma solução: As restrições são muito rígidas. " +
+                            "Tente aumentar a disponibilidade de insumos ou reduzir as demandas mínimas.")
                     .build();
         } catch (UnboundedSolutionException e) {
             return OtimizacaoResponse.builder()
-                    .mensagem("Erro: Solução ilimitada. Verifique se você esqueceu de cadastrar " +
-                            "o gasto de algum insumo (como Mão de Obra) nos seus serviços.")
+                    .mensagem("⚠️ Erro de configuração: O lucro parece ser infinito. " +
+                            "Verifique se todos os serviços possuem custos cadastrados (insumos) " +
+                            "e se o preço de venda está realista.")
                     .build();
         }
 

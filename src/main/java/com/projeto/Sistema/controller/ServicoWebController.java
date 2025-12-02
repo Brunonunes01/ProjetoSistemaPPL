@@ -6,6 +6,7 @@ import com.projeto.Sistema.infrastructure.dto.InsumoResponse;
 import com.projeto.Sistema.infrastructure.dto.ServicoRequest;
 import com.projeto.Sistema.infrastructure.dto.ServicoResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,10 +80,19 @@ public class ServicoWebController {
                 // Se o ID NÃO é nulo, é um serviço existente (UPDATE)
                 servicoService.atualizarServico(request.getId(), request);
             }
+        } catch (DataIntegrityViolationException e) {
+            // Trata caso tente criar um serviço com nome duplicado (já que o nome é unique=true no banco)
+            model.addAttribute("erro", "Já existe um serviço cadastrado com o nome '" + request.getNome() + "'. Por favor, escolha outro nome.");
+
+            // Recarrega os dados para a tela não quebrar
+            model.addAttribute("servico", request);
+            model.addAttribute("insumos", insumoService.listarTodos());
+            model.addAttribute("titulo", "Erro ao Salvar Serviço");
+            return "form-servico";
+
         } catch (Exception e) {
-            // Em caso de erro (ex: Insumo não encontrado), voltamos ao form
-            // e mostramos a mensagem de erro.
-            model.addAttribute("erro", e.getMessage());
+            // Em caso de erro genérico (ex: Insumo não encontrado)
+            model.addAttribute("erro", "Ocorreu um erro: " + e.getMessage());
             model.addAttribute("servico", request); // Devolve o DTO preenchido
             model.addAttribute("insumos", insumoService.listarTodos()); // Envia os insumos de novo
             model.addAttribute("titulo", "Erro ao Salvar Serviço");

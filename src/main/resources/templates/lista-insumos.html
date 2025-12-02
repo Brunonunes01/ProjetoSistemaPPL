@@ -6,9 +6,19 @@
 
 <section layout:fragment="content">
 
-    <h1 th:text="${titulo}"></h1>
+    <h1 th:text="${titulo}">Lista de Insumos</h1>
 
-    <table class="table table-hover table-striped">
+    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${sucesso}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${erro}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <table class="table table-hover table-striped mt-3">
         <thead class="table-light">
         <tr>
             <th>ID</th>
@@ -20,18 +30,20 @@
         </thead>
         <tbody>
         <tr th:each="insumo : ${insumos}">
-            <td th:text="${insumo.id}">1</td>
-            <td th:text="${insumo.nome}">Produto Limpador X</td>
-            <td th:text="${insumo.unidadeDeMedida}">Litro</td>
-            <td th:text="${#numbers.formatDecimal(insumo.precoPorUnidade, 1, 'COMMA', 2, 'POINT')}">120.00</td>
+            <td th:text="${insumo.id}"></td>
+            <td th:text="${insumo.nome}"></td>
+            <td th:text="${insumo.unidadeDeMedida}"></td>
+            <td th:text="${#numbers.formatDecimal(insumo.precoPorUnidade, 1, 'POINT', 2, 'COMMA')}"></td>
 
             <td sec:authorize="hasRole('ADMIN')">
                 <a th:href="@{/insumos/editar/{id}(id=${insumo.id})}" class="btn btn-warning btn-sm">Editar</a>
-                <a th:href="@{/insumos/excluir/{id}(id=${insumo.id})}" class="btn btn-danger btn-sm">Excluir</a>
+                <a th:href="@{/insumos/excluir/{id}(id=${insumo.id})}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('Tem certeza que deseja excluir este insumo?');">Excluir</a>
             </td>
         </tr>
-        <tr th:if="${insumos.empty}">
-            <td colspan="5">Nenhum insumo cadastrado.</td>
+        <tr th:if="${#lists.isEmpty(insumos)}">
+            <td colspan="5" class="text-center text-muted">Nenhum insumo cadastrado.</td>
         </tr>
         </tbody>
     </table>
