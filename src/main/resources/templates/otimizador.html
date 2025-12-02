@@ -5,52 +5,52 @@
 
 <section layout:fragment="content">
 
-    <div class="text-center mb-5">
-        <h1 class="display-6 fw-bold text-dark"><i class="bi bi-magic me-2 text-primary"></i>Otimizador de Lucro</h1>
-        <p class="text-muted">Descubra a combinação ideal de serviços para maximizar seus ganhos.</p>
+    <div class="text-center mb-5 animate__animated animate__fadeIn">
+        <h1 class="h2 fw-bold text-dark"><i class="bi bi-magic me-2 text-primary"></i>Otimizador de Lucro</h1>
+        <p class="text-muted">Algoritmo Simplex para maximização de resultados.</p>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white py-3 border-bottom">
-                    <h5 class="mb-0 text-primary fw-bold">1. Limites de Recursos</h5>
+                    <h6 class="mb-0 text-primary fw-bold text-uppercase ls-1">1. Restrições de Recursos</h6>
                 </div>
                 <div class="card-body">
                     <form th:action="@{/otimizar}" method="post" th:object="${requestForm}">
 
-                        <div th:if="${#lists.isEmpty(insumos)}" class="text-center py-4">
-                            <p class="text-muted">Sem insumos cadastrados.</p>
-                            <a href="/insumos/novo" class="btn btn-sm btn-outline-primary">Cadastrar</a>
+                        <div th:if="${#lists.isEmpty(insumos)}" class="text-center py-4 bg-light rounded-3">
+                            <p class="text-muted mb-2">Sem insumos para limitar.</p>
+                            <a href="/insumos/novo" class="btn btn-sm btn-primary">Cadastrar</a>
                         </div>
 
                         <div class="vstack gap-3">
-                            <div th:each="insumo, stat : ${insumos}" class="p-3 border rounded bg-light bg-opacity-25">
+                            <div th:each="insumo, stat : ${insumos}" class="p-3 border rounded-3 bg-light bg-opacity-50">
                                 <input type="hidden" th:field="*{limites[__${stat.index}__].insumoId}"/>
 
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <label class="fw-bold text-dark mb-0" th:text="${insumo.nome}">Nome</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input toggle-limite" type="checkbox"
+                                        <input class="form-check-input toggle-limite" type="checkbox" style="cursor: pointer;"
                                                th:checked="${requestForm.limites[__${stat.index}__].totalDisponivel != null}"
                                                onchange="toggleInput(this)">
                                     </div>
                                 </div>
 
                                 <div class="input-group input-group-container" style="display: none;">
-                                    <input type="number" class="form-control input-valor"
+                                    <input type="number" class="form-control input-valor border-end-0"
                                            th:field="*{limites[__${stat.index}__].totalDisponivel}"
                                            step="0.01" min="0" placeholder="0.00"/>
-                                    <span class="input-group-text bg-white text-muted" th:text="${insumo.unidadeDeMedida}">kg</span>
+                                    <span class="input-group-text bg-white text-muted border-start-0" th:text="${insumo.unidadeDeMedida}">kg</span>
                                 </div>
-                                <div class="text-success small fst-italic texto-ilimitado">
+                                <div class="text-success small fw-medium texto-ilimitado">
                                     <i class="bi bi-infinity me-1"></i> Ilimitado
                                 </div>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-3 mt-4 fw-bold shadow-sm" th:unless="${#lists.isEmpty(insumos)}">
-                            <i class="bi bi-lightning-charge-fill me-1"></i> Calcular Melhor Cenário
+                        <button type="submit" class="btn btn-primary w-100 py-3 mt-4 fw-bold shadow-primary" th:unless="${#lists.isEmpty(insumos)}">
+                            <i class="bi bi-lightning-charge-fill me-1"></i> Calcular Otimização
                         </button>
                     </form>
                 </div>
@@ -58,39 +58,51 @@
         </div>
 
         <div class="col-lg-7">
-            <div class="card border-0 shadow h-100" th:classappend="${resposta != null} ? 'border-primary' : ''">
+            <div class="card border-0 shadow h-100" th:classappend="${resposta != null} ? 'border-top border-4 border-primary' : ''">
                 <div class="card-header bg-white py-3 border-bottom">
-                    <h5 class="mb-0 text-dark fw-bold">2. Resultado da Análise</h5>
+                    <h6 class="mb-0 text-dark fw-bold text-uppercase ls-1">2. Análise & Resultados</h6>
                 </div>
                 <div class="card-body p-4 d-flex flex-column justify-content-center">
 
                     <div th:if="${resposta == null}" class="text-center text-muted opacity-50 py-5">
-                        <i class="bi bi-bar-chart-steps fs-1 mb-3 d-block"></i>
-                        <p>Defina os limites e calcule para ver o resultado.</p>
+                        <i class="bi bi-bar-chart-steps display-1 mb-3 d-block"></i>
+                        <p class="lead">Defina os limites e calcule para ver o plano ideal.</p>
                     </div>
 
-                    <div th:if="${resposta != null}">
-                        <div th:class="${resposta.lucroMaximo != null} ? 'alert alert-success border-0 shadow-sm' : 'alert alert-danger border-0 shadow-sm'">
-                            <i class="bi" th:classappend="${resposta.lucroMaximo != null} ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
-                            <span class="fw-medium ms-2" th:text="${resposta.mensagem}"></span>
+                    <div th:if="${resposta != null}" class="animate__animated animate__fadeIn">
+                        <div class="alert border-0 shadow-sm d-flex align-items-center mb-4"
+                             th:classappend="${resposta.lucroMaximo != null} ? 'alert-success bg-success bg-opacity-10 text-success' : 'alert-danger'">
+                            <i class="fs-4 me-3" th:classappend="${resposta.lucroMaximo != null} ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                            <span class="fw-bold" th:text="${resposta.mensagem}"></span>
                         </div>
 
-                        <div th:if="${resposta.lucroMaximo != null}" class="text-center py-4 bg-light rounded-3 mb-4">
-                            <p class="text-muted text-uppercase small fw-bold mb-1">Lucro Máximo Potencial</p>
-                            <h2 class="display-3 fw-bold text-success mb-0"
+                        <div th:if="${resposta.lucroMaximo != null}" class="text-center py-4 bg-light rounded-4 mb-4 position-relative overflow-hidden">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-primary opacity-10"></div>
+                            <p class="text-muted text-uppercase small fw-bold mb-1 position-relative">Lucro Máximo Estimado</p>
+                            <h2 class="display-3 fw-bold text-success mb-0 position-relative"
                                 th:text="${'R$ ' + #numbers.formatDecimal(resposta.lucroMaximo, 1, 'POINT', 2, 'COMMA')}">
                                 R$ 0,00
                             </h2>
                         </div>
 
-                        <h6 class="fw-bold text-secondary mb-3" th:if="${resposta.planoIdeal != null}">Plano de Produção:</h6>
-                        <div class="list-group shadow-sm" th:if="${resposta.planoIdeal != null}">
-                            <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 border-bottom"
-                                 th:each="item : ${resposta.planoIdeal}">
-                                <span class="fw-medium text-dark" th:text="${item.nomeServico}">Serviço</span>
-                                <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
-                                    <span th:text="${item.quantidadeArredondada}">0</span> unid.
-                                </span>
+                        <div class="row" th:if="${resposta.planoIdeal != null}">
+                            <div class="col-md-7">
+                                <h6 class="fw-bold text-secondary mb-3">Plano de Produção:</h6>
+                                <div class="list-group shadow-sm border-0">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 border-bottom bg-transparent"
+                                         th:each="item : ${resposta.planoIdeal}">
+                                        <span class="fw-medium text-dark" th:text="${item.nomeServico}">Serviço</span>
+                                        <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">
+                                            <span th:text="${item.quantidadeArredondada}">0</span> <span class="fw-normal opacity-75">unid.</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-5 d-flex align-items-center justify-content-center">
+                                <div style="width: 100%; max-width: 200px;">
+                                    <canvas id="resultChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -100,9 +112,9 @@
         </div>
     </div>
 
-    <script>
+    <script th:inline="javascript">
         function toggleInput(checkbox) {
-            const container = checkbox.closest('.p-3'); // Ajuste do seletor pai
+            const container = checkbox.closest('.p-3');
             const inputGroup = container.querySelector('.input-group-container');
             const textIlimitado = container.querySelector('.texto-ilimitado');
             const inputValor = container.querySelector('.input-valor');
@@ -119,6 +131,31 @@
         }
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.toggle-limite').forEach(chk => toggleInput(chk));
+
+            // Gráfico de Resultados
+            /*[+
+            const plano = [[${resposta != null ? resposta.planoIdeal : null}]];
+            +]*/
+
+            if(plano && plano.length > 0) {
+                const ctx = document.getElementById('resultChart');
+                if(ctx) {
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: plano.map(i => i.nomeServico),
+                            datasets: [{
+                                data: plano.map(i => i.quantidadeArredondada),
+                                backgroundColor: ['#4361ee', '#3a0ca3', '#4cc9f0', '#f72585'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            }
         });
     </script>
 
