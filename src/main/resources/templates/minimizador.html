@@ -5,81 +5,90 @@
 
 <section layout:fragment="content">
 
-    <h1 class="mb-4" th:text="${titulo}"></h1>
+    <div class="text-center mb-5">
+        <h1 class="display-6 fw-bold text-dark"><i class="bi bi-piggy-bank me-2 text-danger"></i>Minimizador de Custo</h1>
+        <p class="text-muted">Alcance suas metas de produção gastando o mínimo possível.</p>
+    </div>
 
     <div class="row g-4">
-
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">1. Insira suas Metas Mínimas</h2>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 text-danger fw-bold">1. Metas de Produção</h5>
                 </div>
                 <div class="card-body">
                     <form th:action="@{/minimizar}" method="post" th:object="${requestForm}">
 
-                        <div th:each="servico, stat : ${servicos}">
-                            <input type="hidden" th:field="*{metas[__${stat.index}__].servicoId}"/>
+                        <div class="vstack gap-3">
+                            <div th:each="servico, stat : ${servicos}" class="p-3 border rounded bg-light bg-opacity-25">
+                                <input type="hidden" th:field="*{metas[__${stat.index}__].servicoId}"/>
 
-                            <div class="mb-3">
-                                <label class="form-label" th:for="${'meta' + stat.index}"
-                                       th:text="${'Meta de ' + servico.nome}">
-                                    Meta de Limpeza de Sofá
-                                </label>
-                                <span class="form-text d-block"
-                                      th:text="${'(Custo Unit.: R$ ' + #numbers.formatDecimal(servico.custoTotal, 1, 'COMMA', 2, 'POINT') + ')'}">
-                                    (Custo Unit.: R$ 83,90)
-                                </span>
-                                <input type="number" th:id="${'meta' + stat.index}" class="form-control"
-                                       th:field="*{metas[__${stat.index}__].metaMinima}"
-                                       step="1" min="0" placeholder="Deixe em branco ou 0"/>
+                                <label class="fw-bold text-dark d-block mb-1" th:text="${servico.nome}">Serviço</label>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-white text-muted border fw-normal">
+                                        Custo: R$ <span th:text="${#numbers.formatDecimal(servico.custoTotal, 1, 'POINT', 2, 'COMMA')}"></span>
+                                    </span>
+                                </div>
+
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted">Meta Mínima</span>
+                                    <input type="number" class="form-control"
+                                           th:field="*{metas[__${stat.index}__].metaMinima}"
+                                           step="1" min="0" placeholder="0"/>
+                                    <span class="input-group-text bg-white text-muted">unid.</span>
+                                </div>
                             </div>
                         </div>
 
-                        <hr>
-                        <button type="submit" class="btn btn-danger w-100 btn-lg">Calcular Custo Mínimo</button>
+                        <button type="submit" class="btn btn-danger w-100 py-3 mt-4 fw-bold shadow-sm">
+                            <i class="bi bi-calculator me-1"></i> Calcular Menor Custo
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-6" th:if="${resposta != null}">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">2. Resultado da Minimização</h2>
+        <div class="col-lg-7">
+            <div class="card border-0 shadow h-100" th:classappend="${resposta != null} ? 'border-danger' : ''">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 text-dark fw-bold">2. Resultado</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
 
-                    <div th:if="${resposta.custoMinimoTotal != null}">
-                        <div class="alert alert-success">
-                            <p class="h6 mb-0" th:text="${resposta.mensagem}">Solução encontrada!</p>
-                        </div>
-
-                        <p class="text-muted mb-1">O custo mínimo estimado é:</p>
-                        <p class="h2 text-danger fw-bold mb-3"
-                           th:text="${'R$ ' + #numbers.formatDecimal(resposta.custoMinimoTotal, 1, 'COMMA', 2, 'POINT')}">
-                            R$ 5.000,00
-                        </p>
-
-                        <h3 class="h5">Plano de Produção (Mínimo):</h3>
-                        <ul class="list-group">
-                            <li class="list-group-item" th:each="item : ${resposta.planoIdeal}"
-                                th:text="${item.nomeServico + ': ' + item.quantidade + ' unidades'}">
-                                Limpeza de Sofá: 50 unidades
-                            </li>
-                        </ul>
+                    <div th:if="${resposta == null}" class="text-center text-muted opacity-50 py-5">
+                        <i class="bi bi-list-check fs-1 mb-3 d-block"></i>
+                        <p>Defina quanto quer produzir de cada item.</p>
                     </div>
 
-                    <div th:if="${resposta.mensagem != null && resposta.custoMinimoTotal == null}">
-                        <div class="alert alert-danger">
-                            <p class="fw-bold mb-0" th:text="${resposta.mensagem}">
-                                Erro: Solução impossível.
-                            </p>
+                    <div th:if="${resposta != null}">
+                        <div th:class="${resposta.custoMinimoTotal != null} ? 'alert alert-success border-0 shadow-sm' : 'alert alert-danger border-0 shadow-sm'">
+                            <span class="fw-medium" th:text="${resposta.mensagem}"></span>
+                        </div>
+
+                        <div th:if="${resposta.custoMinimoTotal != null}" class="text-center py-4 bg-light rounded-3 mb-4">
+                            <p class="text-muted text-uppercase small fw-bold mb-1">Custo Mínimo Total</p>
+                            <h2 class="display-3 fw-bold text-danger mb-0"
+                                th:text="${'R$ ' + #numbers.formatDecimal(resposta.custoMinimoTotal, 1, 'POINT', 2, 'COMMA')}">
+                                R$ 0,00
+                            </h2>
+                        </div>
+
+                        <h6 class="fw-bold text-secondary mb-3" th:if="${resposta.planoIdeal != null}">Produção Necessária:</h6>
+                        <div class="list-group shadow-sm" th:if="${resposta.planoIdeal != null}">
+                            <div class="list-group-item d-flex justify-content-between align-items-center p-3 border-0 border-bottom"
+                                 th:each="item : ${resposta.planoIdeal}">
+                                <span class="fw-medium text-dark" th:text="${item.nomeServico}">Serviço</span>
+                                <span class="badge bg-danger rounded-pill px-3 py-2 fs-6">
+                                    <span th:text="${item.quantidade}">0</span> unid.
+                                </span>
+                            </div>
                         </div>
                     </div>
 
                 </div>
             </div>
         </div>
+    </div>
 
-    </div> </section>
+</section>
 </html>

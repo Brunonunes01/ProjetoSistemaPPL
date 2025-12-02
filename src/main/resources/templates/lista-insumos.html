@@ -6,51 +6,66 @@
 
 <section layout:fragment="content">
 
-    <h1 th:text="${titulo}">Lista de Insumos</h1>
-
-    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <span th:text="${sucesso}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">Insumos</h1>
+            <p class="text-muted mb-0">Gerencie os custos variáveis e materiais.</p>
+        </div>
+        <a sec:authorize="hasRole('ADMIN')" href="/insumos/novo" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Novo Insumo
+        </a>
     </div>
 
-    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <span th:text="${erro}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4" style="width: 5%;">ID</th>
+                        <th style="width: 35%;">Nome</th>
+                        <th style="width: 20%;">Unidade</th>
+                        <th style="width: 20%;">Custo Unitário (R$)</th>
+                        <th sec:authorize="hasRole('ADMIN')" class="text-end pe-4" style="width: 20%;">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="insumo : ${insumos}">
+                        <td class="ps-4 text-muted fw-mono" th:text="${'#' + insumo.id}">#1</td>
+                        <td>
+                            <span class="fw-medium text-dark" th:text="${insumo.nome}">Nome</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-secondary border fw-normal" th:text="${insumo.unidadeDeMedida}">Litro</span>
+                        </td>
+                        <td class="fw-bold text-success">
+                            R$ <span th:text="${#numbers.formatDecimal(insumo.precoPorUnidade, 1, 'POINT', 2, 'COMMA')}">120,00</span>
+                        </td>
+
+                        <td sec:authorize="hasRole('ADMIN')" class="text-end pe-4">
+                            <div class="btn-group">
+                                <a th:href="@{/insumos/editar/{id}(id=${insumo.id})}" class="btn btn-outline-secondary btn-sm border-0" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a th:href="@{/insumos/excluir/{id}(id=${insumo.id})}"
+                                   class="btn btn-outline-danger btn-sm border-0"
+                                   onclick="return confirm('Tem certeza que deseja excluir este insumo?');" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(insumos)}">
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                            Nenhum insumo cadastrado.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-    <table class="table table-hover table-striped mt-3">
-        <thead class="table-light">
-        <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Unidade de Medida</th>
-            <th>Preço por Unidade (R$)</th>
-            <th sec:authorize="hasRole('ADMIN')">Ações</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="insumo : ${insumos}">
-            <td th:text="${insumo.id}"></td>
-            <td th:text="${insumo.nome}"></td>
-            <td th:text="${insumo.unidadeDeMedida}"></td>
-            <td th:text="${#numbers.formatDecimal(insumo.precoPorUnidade, 1, 'POINT', 2, 'COMMA')}"></td>
-
-            <td sec:authorize="hasRole('ADMIN')">
-                <a th:href="@{/insumos/editar/{id}(id=${insumo.id})}" class="btn btn-warning btn-sm">Editar</a>
-                <a th:href="@{/insumos/excluir/{id}(id=${insumo.id})}"
-                   class="btn btn-danger btn-sm"
-                   onclick="return confirm('Tem certeza que deseja excluir este insumo?');">Excluir</a>
-            </td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(insumos)}">
-            <td colspan="5" class="text-center text-muted">Nenhum insumo cadastrado.</td>
-        </tr>
-        </tbody>
-    </table>
-
-    <p class="mt-3" sec:authorize="hasRole('ADMIN')">
-        <a href="/insumos/novo" class="btn btn-primary">Cadastrar Novo Insumo</a>
-    </p>
 
 </section>
 </html>

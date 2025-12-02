@@ -6,46 +6,77 @@
 
 <section layout:fragment="content">
 
-    <h1 th:text="${titulo}"></h1>
-
-    <div class="table-responsive">
-        <table class="table table-hover table-striped">
-            <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>Nome do Serviço</th>
-                <th>Preço de Venda (R$)</th>
-                <th sec:authorize="hasRole('ADMIN')">Custo Total (R$)</th>
-                <th sec:authorize="hasRole('ADMIN')">Lucro Unitário (R$)</th>
-                <th sec:authorize="hasRole('ADMIN')">Ações</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="servico : ${servicos}">
-                <td th:text="${servico.id}">1</td>
-                <td th:text="${servico.nome}">Limpeza de Sofá</td>
-                <td th:text="${#numbers.formatDecimal(servico.precoVenda, 1, 'COMMA', 2, 'POINT')}">250,00</td>
-
-                <td class="text-danger fw-bold" sec:authorize="hasRole('ADMIN')"
-                    th:text="${#numbers.formatDecimal(servico.custoTotal, 1, 'COMMA', 2, 'POINT')}">100,00</td>
-                <td class="text-success fw-bold" sec:authorize="hasRole('ADMIN')"
-                    th:text="${#numbers.formatDecimal(servico.lucroUnitario, 1, 'COMMA', 2, 'POINT')}">150,00</td>
-
-                <td sec:authorize="hasRole('ADMIN')">
-                    <a th:href="@{/servicos/editar/{id}(id=${servico.id})}" class="btn btn-warning btn-sm">Editar</a>
-                    <a th:href="@{/servicos/excluir/{id}(id=${servico.id})}" class="btn btn-danger btn-sm">Excluir</a>
-                </td>
-            </tr>
-            <tr th:if="${servicos.empty}">
-                <td colspan="6">Nenhum serviço cadastrado.</td>
-            </tr>
-            </tbody>
-        </table>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">Serviços</h1>
+            <p class="text-muted mb-0">Catálogo de serviços e análise de rentabilidade.</p>
+        </div>
+        <a sec:authorize="hasRole('ADMIN')" href="/servicos/novo" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Novo Serviço
+        </a>
     </div>
 
-    <p class="mt-3" sec:authorize="hasRole('ADMIN')">
-        <a href="/servicos/novo" class="btn btn-primary">Cadastrar Novo Serviço</a>
-    </p>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Serviço</th>
+                        <th>Preço Venda</th>
+                        <th sec:authorize="hasRole('ADMIN')">Custo Total</th>
+                        <th sec:authorize="hasRole('ADMIN')">Margem de Lucro</th>
+                        <th sec:authorize="hasRole('ADMIN')" class="text-end pe-4">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="servico : ${servicos}">
+                        <td class="ps-4">
+                            <div class="fw-bold text-dark" th:text="${servico.nome}">Limpeza de Sofá</div>
+                            <small class="text-muted" th:text="${'ID: #' + servico.id}">#1</small>
+                        </td>
+                        <td>
+                            <span class="fs-6 text-dark" th:text="${'R$ ' + #numbers.formatDecimal(servico.precoVenda, 1, 'POINT', 2, 'COMMA')}">250,00</span>
+                        </td>
+
+                        <td sec:authorize="hasRole('ADMIN')">
+                            <div class="d-flex align-items-center text-danger">
+                                <i class="bi bi-arrow-down-short me-1"></i>
+                                <span class="fw-medium" th:text="${'R$ ' + #numbers.formatDecimal(servico.custoTotal, 1, 'POINT', 2, 'COMMA')}">100,00</span>
+                            </div>
+                        </td>
+
+                        <td sec:authorize="hasRole('ADMIN')">
+                            <div class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-10 px-3 py-2 rounded-pill">
+                                <i class="bi bi-graph-up-arrow me-2"></i>
+                                <span class="fw-bold fs-6" th:text="${'R$ ' + #numbers.formatDecimal(servico.lucroUnitario, 1, 'POINT', 2, 'COMMA')}">150,00</span>
+                            </div>
+                        </td>
+
+                        <td sec:authorize="hasRole('ADMIN')" class="text-end pe-4">
+                            <div class="btn-group">
+                                <a th:href="@{/servicos/editar/{id}(id=${servico.id})}" class="btn btn-outline-secondary btn-sm border-0" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a th:href="@{/servicos/excluir/{id}(id=${servico.id})}"
+                                   class="btn btn-outline-danger btn-sm border-0"
+                                   onclick="return confirm('Tem certeza que deseja excluir este serviço?');" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(servicos)}">
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-clipboard-x fs-1 d-block mb-2 opacity-50"></i>
+                            Nenhum serviço cadastrado.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
 </section>
 </html>

@@ -5,83 +5,88 @@
 
 <section layout:fragment="content">
 
-    <div class="row">
-        <div class="col-md-8 col-lg-6 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h1 class="h4 mb-0" th:text="${titulo}"></h1>
-                </div>
-                <div class="card-body">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
 
-                    <div th:if="${erro}" class="alert alert-danger">
-                        <span th:text="${erro}"></span>
-                    </div>
+            <div class="mb-4">
+                <a href="/insumos" class="text-decoration-none text-muted small hover-underline">
+                    <i class="bi bi-arrow-left"></i> Voltar para Lista
+                </a>
+                <h1 class="h3 fw-bold mt-2" th:text="${titulo}">Cadastro</h1>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
 
                     <form th:action="@{/insumos/salvar}" method="post" th:object="${insumo}" novalidate>
 
                         <input type="hidden" th:field="*{id}"/>
 
-                        <div class="mb-3">
-                            <label for="nome" class="form-label">Nome do Insumo:</label>
-                            <input type="text" id="nome"
-                                   th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid' : ''"
-                                   class="form-control" th:field="*{nome}"
-                                   placeholder="Ex: Produto Limpador X"/>
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
+                        <div class="mb-4">
+                            <label for="nome" class="form-label fw-medium">Nome do Insumo</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-tag"></i></span>
+                                <input type="text" id="nome"
+                                       th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid' : ''"
+                                       class="form-control" th:field="*{nome}"
+                                       placeholder="Ex: Produto Limpador X"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="unidadeDeMedida" class="form-label">Unidade de Medida (Base de Cálculo):</label>
+                        <div class="mb-4">
+                            <label for="unidadeDeMedida" class="form-label fw-medium">Unidade de Medida (Base)</label>
                             <select id="unidadeDeMedida"
                                     th:classappend="${#fields.hasErrors('unidadeDeMedida')} ? 'is-invalid' : ''"
                                     class="form-select" th:field="*{unidadeDeMedida}">
-                                <option value="">Selecione a unidade...</option>
+                                <option value="">Selecione...</option>
                                 <option th:each="unidade : ${unidades}"
                                         th:value="${unidade}"
                                         th:text="${unidade}">Litro
                                 </option>
                             </select>
                             <div class="invalid-feedback" th:if="${#fields.hasErrors('unidadeDeMedida')}" th:errors="*{unidadeDeMedida}"></div>
-                            <div class="form-text text-muted small">
-                                Esta será a unidade usada para calcular o custo nos serviços.
-                            </div>
                         </div>
 
-                        <div class="row g-3 mb-3">
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label for="precoRecipiente" class="form-label" id="labelPreco">Preço Pago (R$):</label>
-                                <input type="number" id="precoRecipiente"
-                                       th:classappend="${#fields.hasErrors('precoRecipiente')} ? 'is-invalid' : ''"
-                                       class="form-control input-calculo" th:field="*{precoRecipiente}"
-                                       step="0.01" min="0" placeholder="Ex: 130.00"/>
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('precoRecipiente')}" th:errors="*{precoRecipiente}"></div>
+                                <label for="precoRecipiente" class="form-label fw-medium" id="labelPreco">Preço Pago (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted">R$</span>
+                                    <input type="number" id="precoRecipiente"
+                                           th:classappend="${#fields.hasErrors('precoRecipiente')} ? 'is-invalid' : ''"
+                                           class="form-control input-calculo" th:field="*{precoRecipiente}"
+                                           step="0.01" min="0" placeholder="0,00"/>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('precoRecipiente')}" th:errors="*{precoRecipiente}"></div>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="quantidadeRecipiente" class="form-label" id="labelQtd">Quantidade Total:</label>
+                                <label for="quantidadeRecipiente" class="form-label fw-medium" id="labelQtd">Quantidade Total</label>
                                 <input type="number" id="quantidadeRecipiente"
                                        th:classappend="${#fields.hasErrors('quantidadeRecipiente')} ? 'is-invalid' : ''"
                                        class="form-control input-calculo" th:field="*{quantidadeRecipiente}"
-                                       step="0.0001" min="0" placeholder="Ex: 5"/>
+                                       step="0.0001" min="0" placeholder="0"/>
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('quantidadeRecipiente')}" th:errors="*{quantidadeRecipiente}"></div>
                             </div>
                         </div>
 
-                        <div class="alert alert-info d-flex align-items-center" role="alert">
-                            <i class="bi bi-calculator fs-4 me-3"></i>
-                            <div>
-                                <h6 class="alert-heading mb-1">Preço Final por Unidade:</h6>
-                                <p class="mb-0 fw-bold fs-5" id="preview-resultado">
-                                    Preencha os valores acima...
-                                </p>
+                        <div class="card bg-primary bg-opacity-10 border-0 mb-4">
+                            <div class="card-body d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-calculator-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-primary fw-bold mb-0 text-uppercase small" style="letter-spacing: 1px;">Custo Unitário Final</h6>
+                                    <p class="mb-0 fs-5 text-dark" id="preview-resultado">R$ 0,00 / Unidade</p>
+                                </div>
                             </div>
                         </div>
 
-                        <hr>
-
-                        <div class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-success">Salvar Insumo</button>
-                            <a href="/insumos" class="btn btn-secondary">Voltar para Lista</a>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="bi bi-check-lg me-2"></i> Salvar Insumo
+                            </button>
                         </div>
 
                     </form>
@@ -99,33 +104,22 @@
             const labelQtd = document.getElementById('labelQtd');
             const previewResultado = document.getElementById('preview-resultado');
 
-            // Unidades que são "1 por 1" (Unitárias)
             const unidadesUnitarias = ['Hora', 'Minuto', 'kWh', 'Unidade(s)', 'km'];
 
             function calcularPrecoUnitario() {
                 const preco = parseFloat(inputPreco.value);
                 const qtd = parseFloat(inputQtd.value);
                 const unidade = selectUnidade.value || 'Unidade';
-
-                // Limpa unidade de textos extras (ex: "m³ (metro cúbico)" vira "m³")
                 const unidadeLimpa = unidade.split(' ')[0];
 
                 if (!isNaN(preco) && !isNaN(qtd) && qtd > 0) {
                     const precoUnitario = preco / qtd;
-
-                    // Formata para moeda BRL
                     const formatado = precoUnitario.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 4
+                        style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 4
                     });
-
-                    previewResultado.innerHTML = `O sistema calculará: <span class="text-primary">${formatado}</span> por <span class="fw-bold">${unidadeLimpa}</span>`;
-                    previewResultado.classList.remove('text-muted');
+                    previewResultado.innerHTML = `<span class="fw-bold text-dark">${formatado}</span> <span class="text-muted fs-6">/ ${unidadeLimpa}</span>`;
                 } else {
-                    previewResultado.innerHTML = "Preencha preço e quantidade para ver o custo unitário.";
-                    previewResultado.classList.add('text-muted');
+                    previewResultado.innerHTML = '<span class="text-muted fs-6">Aguardando dados...</span>';
                 }
             }
 
@@ -134,32 +128,23 @@
                 const unidadeLimpa = unidadeSelecionada.split(' ')[0].replace('(s)', '');
 
                 if (unidadesUnitarias.includes(unidadeSelecionada)) {
-                    // Lógica Unitária
-                    labelPreco.textContent = `Custo por ${unidadeLimpa} (R$):`;
-                    labelQtd.textContent = `Quantidade (Sempre 1):`;
-
-                    if(document.activeElement !== inputQtd) {
-                        inputQtd.value = '1';
-                    }
+                    labelPreco.textContent = `Custo por ${unidadeLimpa} (R$)`;
+                    labelQtd.textContent = `Quantidade (Fixa)`;
+                    if(document.activeElement !== inputQtd) inputQtd.value = '1';
                     inputQtd.readOnly = true;
-                    inputQtd.style.backgroundColor = '#e9ecef';
+                    inputQtd.classList.add('bg-light');
                 } else {
-                    // Lógica Padrão (Litro, m³, kg)
-                    labelPreco.textContent = 'Preço do Recipiente (R$):';
-                    labelQtd.textContent = `Qtd. no Recipiente (${unidadeLimpa}):`; // Mostra a unidade no label
-
+                    labelPreco.textContent = 'Preço do Recipiente (R$)';
+                    labelQtd.textContent = `Qtd. no Recipiente (${unidadeLimpa})`;
                     inputQtd.readOnly = false;
-                    inputQtd.style.backgroundColor = '#fff';
+                    inputQtd.classList.remove('bg-light');
                 }
                 calcularPrecoUnitario();
             }
 
-            // Event Listeners
             selectUnidade.addEventListener('change', atualizarLabelsInputs);
             inputPreco.addEventListener('input', calcularPrecoUnitario);
             inputQtd.addEventListener('input', calcularPrecoUnitario);
-
-            // Inicializa na carga da página (para edições)
             atualizarLabelsInputs();
         });
     </script>
