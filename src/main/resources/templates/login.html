@@ -14,28 +14,41 @@
             background-color: #f1f5f9;
             font-family: 'Inter', sans-serif;
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex;       /* Habilita Flexbox */
+            align-items: center; /* Centraliza Verticalmente */
+            justify-content: center; /* Centraliza Horizontalmente */
+            margin: 0;
         }
+
+        main {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+
         .login-card {
             width: 100%;
             max-width: 400px;
             border: none;
             border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            background-color: white;
+            overflow: hidden; /* Garante que o cabeçalho não vaze as bordas arredondadas */
         }
+
         .login-header {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: white;
-            border-radius: 16px 16px 0 0;
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             text-align: center;
         }
+
         .form-floating > .form-control:focus ~ label,
         .form-floating > .form-control:not(:placeholder-shown) ~ label {
             color: #2563eb;
         }
+
         .form-control:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.1);
@@ -44,41 +57,45 @@
 </head>
 <body>
 
-<main class="container">
+<main>
     <div class="card login-card">
         <div class="login-header">
-            <i class="bi bi-hexagon-fill display-4 mb-2"></i>
-            <h1 class="h4 fw-bold mb-0">Sistema PPL</h1>
-            <p class="small opacity-75 mb-0">Gestão e Otimização</p>
+            <i class="bi bi-hexagon-fill display-3 mb-3 d-block"></i>
+            <h1 class="h4 fw-bold mb-1">Sistema PPL</h1>
+            <p class="small opacity-75 mb-0 font-monospace">OTIMIZAÇÃO & GESTÃO</p>
         </div>
-        <div class="card-body p-4 pt-5">
+
+        <div class="card-body p-4 pt-4">
+
             <form th:action="@{/login}" method="post">
 
-                <div th:if="${param.error}" class="alert alert-danger d-flex align-items-center gap-2 py-2 text-sm mb-4">
-                    <i class="bi bi-x-circle-fill"></i> Usuário ou senha inválidos.
+                <div th:if="${param.error}" class="alert alert-danger d-flex align-items-center gap-2 py-2 text-sm mb-4 border-0 bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-exclamation-circle-fill"></i> Usuário ou senha inválidos.
                 </div>
 
-                <div th:if="${param.logout}" class="alert alert-success d-flex align-items-center gap-2 py-2 text-sm mb-4">
+                <div th:if="${param.logout}" class="alert alert-success d-flex align-items-center gap-2 py-2 text-sm mb-4 border-0 bg-success bg-opacity-10 text-success">
                     <i class="bi bi-check-circle-fill"></i> Desconectado com sucesso.
                 </div>
 
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="username" name="username" placeholder="Usuário" required>
-                    <label for="username"><i class="bi bi-person me-1"></i> Usuário</label>
+                    <label for="username" class="text-muted"><i class="bi bi-person me-2"></i>Usuário</label>
                 </div>
 
                 <div class="form-floating mb-4">
                     <input type="password" class="form-control" id="password" name="password" placeholder="Senha" required>
-                    <label for="password"><i class="bi bi-lock me-1"></i> Senha</label>
+                    <label for="password" class="text-muted"><i class="bi bi-lock me-2"></i>Senha</label>
                 </div>
 
-                <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm mb-3" type="submit">
-                    Acessar Sistema
+                <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm mb-3 rounded-3" type="submit">
+                    ENTRAR
                 </button>
+
             </form>
         </div>
-        <div class="card-footer bg-white border-0 text-center pb-4">
-            <small class="text-muted">© 2025 Higienizadora PPL</small>
+
+        <div class="card-footer bg-white border-0 text-center pb-4 pt-0">
+            <small class="text-muted" style="font-size: 0.75rem;">© 2025 Higienizadora PPL System</small>
         </div>
     </div>
 </main>

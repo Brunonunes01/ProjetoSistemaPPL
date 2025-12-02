@@ -31,7 +31,6 @@ public class InsumoWebController {
         );
     }
 
-    // --- LISTAR ---
     @GetMapping("/insumos")
     public String listarInsumos(Model model) {
         List<InsumoResponse> insumos = insumoService.listarTodos();
@@ -40,7 +39,6 @@ public class InsumoWebController {
         return "lista-insumos";
     }
 
-    // --- NOVO ---
     @GetMapping("/insumos/novo")
     public String mostrarFormularioDeCadastro(Model model) {
         model.addAttribute("insumo", new InsumoRequest());
@@ -49,7 +47,6 @@ public class InsumoWebController {
         return "form-insumo";
     }
 
-    // --- EDITAR ---
     @GetMapping("/insumos/editar/{id}")
     public String mostrarFormularioDeEdicao(@PathVariable Long id, Model model) {
         InsumoRequest insumoDto = insumoService.buscarInsumoPorId(id);
@@ -59,7 +56,6 @@ public class InsumoWebController {
         return "form-insumo";
     }
 
-    // --- EXCLUIR ---
     @GetMapping("/insumos/excluir/{id}")
     public String excluirInsumo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -73,21 +69,18 @@ public class InsumoWebController {
         return "redirect:/insumos";
     }
 
-    // --- SALVAR (Com Validação @Valid) ---
     @PostMapping("/insumos/salvar")
     public String salvarInsumo(@Valid @ModelAttribute("insumo") InsumoRequest request,
                                BindingResult bindingResult,
                                Model model,
                                RedirectAttributes redirectAttributes) {
 
-        // 1. Se houver erros de validação (ex: negativo, vazio), volta para o form
         if (bindingResult.hasErrors()) {
             model.addAttribute("titulo", request.getId() == null ? "Cadastrar Novo Insumo" : "Editar Insumo");
             model.addAttribute("unidades", getUnidadesDeMedida());
-            return "form-insumo"; // Retorna o HTML com os erros
+            return "form-insumo";
         }
 
-        // 2. Tenta salvar
         try {
             if (request.getId() == null) {
                 insumoService.salvarInsumo(request);
@@ -97,7 +90,6 @@ public class InsumoWebController {
                 redirectAttributes.addFlashAttribute("sucesso", "Insumo atualizado com sucesso!");
             }
         } catch (Exception e) {
-            // Erro genérico de serviço
             model.addAttribute("erro", "Erro ao processar: " + e.getMessage());
             model.addAttribute("titulo", "Erro no Insumo");
             model.addAttribute("unidades", getUnidadesDeMedida());
@@ -106,4 +98,7 @@ public class InsumoWebController {
 
         return "redirect:/insumos";
     }
+
+    // ⚠️ ATENÇÃO: O antigo método redirecionarParaServicos() (rota "/") FOI REMOVIDO DAQUI
+    // para não conflitar com o HomeWebController.
 }

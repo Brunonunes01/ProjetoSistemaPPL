@@ -22,11 +22,10 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. URLs Públicas (Login, H2)
+                        // 1. URLs Públicas (Login, H2, CSS/JS)
                         .requestMatchers("/login", "/h2-console/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/webjars/**").permitAll()
 
-                        // 💡 --- NOVAS REGRAS DE ADMIN --- 💡
                         // 2. URLs de "Escrita" (só o ADMIN pode)
                         .requestMatchers("/insumos/novo", "/insumos/editar/**", "/insumos/excluir/**").hasRole("ADMIN")
                         .requestMatchers("/servicos/novo", "/servicos/editar/**", "/servicos/excluir/**").hasRole("ADMIN")
@@ -40,7 +39,8 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/servicos", true)
+                        // 💡 ALTERAÇÃO AQUI: Agora redireciona para a Dashboard (/) após logar
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
