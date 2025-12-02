@@ -6,10 +6,15 @@
 <section layout:fragment="content">
 
     <div class="row">
-        <div class="col-md-10 col-lg-8 mx-auto">
+        <div class="col-md-10 col-lg-9 mx-auto">
 
-            <div th:if="${erro}" class="alert alert-danger">
-                <p class="fw-bold mb-0" th:text="${erro}"></p>
+            <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show">
+                <span th:text="${erro}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${#fields.hasErrors('servico.gastos')}" class="alert alert-warning">
+                <i class="bi bi-exclamation-circle"></i> <span th:errors="${servico.gastos}"></span>
             </div>
 
             <div class="card shadow-sm">
@@ -17,62 +22,99 @@
                     <h1 class="h4 mb-0" th:text="${titulo}"></h1>
                 </div>
                 <div class="card-body">
-                    <form th:action="@{/servicos/salvar}" method="post" th:object="${servico}">
+                    <form th:action="@{/servicos/salvar}" method="post" th:object="${servico}" novalidate>
                         <input type="hidden" th:field="*{id}"/>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-8">
                                 <label for="nome" class="form-label">Nome do Serviço:</label>
-                                <input type="text" id="nome" class="form-control" th:field="*{nome}"
+                                <input type="text" id="nome"
+                                       th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid' : ''"
+                                       class="form-control" th:field="*{nome}"
                                        placeholder="Ex: Limpeza de Sofá 3 Lugares"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
                             </div>
                             <div class="col-md-4">
                                 <label for="precoVenda" class="form-label">Preço de Venda (R$):</label>
-                                <input type="number" id="precoVenda" class="form-control" th:field="*{precoVenda}"
+                                <input type="number" id="precoVenda"
+                                       th:classappend="${#fields.hasErrors('precoVenda')} ? 'is-invalid' : ''"
+                                       class="form-control" th:field="*{precoVenda}"
                                        step="0.01" min="0" placeholder="Ex: 250.00"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('precoVenda')}" th:errors="*{precoVenda}"></div>
                             </div>
                         </div>
 
                         <fieldset class="border rounded-3 p-3 mb-3">
                             <legend class="float-none w-auto px-2 h6">Receita (Gastos de Insumos)</legend>
+                            <p class="text-muted small mb-2">Digite a quantidade visualmente (ex: em Litros) e o sistema converterá.</p>
 
                             <div id="gastos-container">
 
-                                <div class="row g-2 align-items-end mb-2 gasto-item" th:each="gasto, stat : *{gastos}">
-                                    <div class="col-md-6">
+                                <div class="row g-2 align-items-start mb-2 gasto-item" th:each="gasto, stat : *{gastos}">
+
+                                    <input type="hidden"
+                                           th:field="*{gastos[__${stat.index}__].quantidadeGasta}"
+                                           class="input-real-qtd" />
+
+                                    <div class="col-md-5">
                                         <label class="form-label">Insumo:</label>
-                                        <select class="form-select" th:field="*{gastos[__${stat.index}__].insumoId}">
+                                        <select class="form-select select-insumo"
+                                                th:classappend="${#fields.hasErrors('gastos[__${stat.index}__].insumoId')} ? 'is-invalid' : ''"
+                                                th:field="*{gastos[__${stat.index}__].insumoId}"
+                                                onchange="atualizarUnidades(this)">
                                             <option value="">Selecione...</option>
                                             <option th:each="ins : ${insumos}"
                                                     th:value="${ins.id}"
-                                                    th:text="${ins.nome + ' (R$ ' + #numbers.formatDecimal(ins.precoPorUnidade, 1, 'COMMA', 2, 'POINT') + ' / ' + ins.unidadeDeMedida + ')'}">
+                                                    th:data-unidade="${ins.unidadeDeMedida}"
+                                                    th:text="${ins.nome + ' (Base: ' + ins.unidadeDeMedida + ')'}">
                                             </option>
                                         </select>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('gastos[__${stat.index}__].insumoId')}"
+                                             th:errors="*{gastos[__${stat.index}__].insumoId}"></div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Qtd:</label>
-                                        <input type="number" step="0.001" min="0" class="form-control" th:field="*{gastos[__${stat.index}__].quantidadeGasta}"/>
-                                    </div>
+
                                     <div class="col-md-2">
-                                        <button type="button" class="btn btn-danger w-100" onclick="removerGasto(this)">X</button>
+                                        <label class="form-label">Qtd. Visual:</label>
+                                        <input type="number" step="0.001" min="0"
+                                               class="form-control input-visual-qtd"
+                                               th:classappend="${#fields.hasErrors('gastos[__${stat.index}__].quantidadeGasta')} ? 'is-invalid' : ''"
+                                               th:value="*{gastos[__${stat.index}__].quantidadeGasta}"
+                                               oninput="calcularQtdReal(this)" />
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('gastos[__${stat.index}__].quantidadeGasta')}"
+                                             th:errors="*{gastos[__${stat.index}__].quantidadeGasta}"></div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Unidade:</label>
+                                        <select class="form-select select-unidade-aux" onchange="calcularQtdReal(this)">
+                                            <option value="1">Padrão</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-2 align-self-center mt-3">
+                                        <button type="button" class="btn btn-danger w-100" onclick="removerGasto(this)">
+                                            X
+                                        </button>
                                     </div>
                                 </div>
 
                             </div>
 
-                            <button type="button" id="add-gasto" class="btn btn-outline-primary mt-2">Adicionar Insumo</button>
+                            <button type="button" id="add-gasto" class="btn btn-outline-primary mt-2">
+                                + Adicionar Insumo
+                            </button>
                         </fieldset>
 
                         <fieldset class="border rounded-3 p-3 mb-3">
-                            <legend class="float-none w-auto px-2 h6">Restrições (Para Otimizador)</legend>
+                            <legend class="float-none w-auto px-2 h6">Restrições (Opcionais)</legend>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="demandaMinima" class="form-label">Demanda Mínima (Contrato):</label>
-                                    <input type="number" id="demandaMinima" class="form-control" th:field="*{demandaMinima}" step="1" min="0"/>
+                                    <label for="demandaMinima" class="form-label">Demanda Mínima (Opcional):</label>
+                                    <input type="number" id="demandaMinima" class="form-control" th:field="*{demandaMinima}" step="1" min="0" placeholder="Ex: 10"/>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="demandaMaxima" class="form-label">Demanda Máxima (Mercado):</label>
-                                    <input type="number" id="demandaMaxima" class="form-control" th:field="*{demandaMaxima}" step="1" min="0"/>
+                                    <label for="demandaMaxima" class="form-label">Demanda Máxima (Opcional):</label>
+                                    <input type="number" id="demandaMaxima" class="form-control" th:field="*{demandaMaxima}" step="1" min="0" placeholder="Ex: 50"/>
                                 </div>
                             </div>
                         </fieldset>
@@ -80,8 +122,8 @@
                         <hr>
 
                         <div class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-success">Salvar Serviço</button>
-                            <a href="/servicos" class="btn btn-secondary">Voltar para Lista</a>
+                            <button type="submit" class="btn btn-success btn-lg">Salvar Serviço</button>
+                            <a href="/servicos" class="btn btn-secondary btn-lg">Voltar</a>
                         </div>
 
                     </form>
@@ -90,54 +132,119 @@
         </div>
     </div>
 
-
     <script th:inline="javascript">
         /*<![CDATA[*/
-        const insumos = /*[[${insumos}]]*/ [];
+        const insumosDados = /*[[${insumos}]]*/ [];
         /*]]>*/
 
         const container = document.getElementById('gastos-container');
         const addButton = document.getElementById('add-gasto');
 
+        function obterOpcoesUnidade(unidadeBase) {
+            const base = unidadeBase ? unidadeBase.trim() : '';
+            if (base === 'm³ (metro cúbico)' || base === 'm³') {
+                return [{ nome: 'm³ (Base)', fator: 1 }, { nome: 'Litros', fator: 0.001 }];
+            }
+            if (base === 'Litro') {
+                return [{ nome: 'Litros (Base)', fator: 1 }, { nome: 'ml', fator: 0.001 }];
+            }
+            if (base === 'Hora') {
+                return [{ nome: 'Horas (Base)', fator: 1 }, { nome: 'Minutos', fator: 1/60 }];
+            }
+            if (base === 'kg') {
+                return [{ nome: 'kg (Base)', fator: 1 }, { nome: 'Gramas', fator: 0.001 }];
+            }
+            return [{ nome: base, fator: 1 }];
+        }
+
+        function atualizarUnidades(selectInsumo) {
+            const linha = selectInsumo.closest('.gasto-item');
+            const selectUnidade = linha.querySelector('.select-unidade-aux');
+            const optionSelecionada = selectInsumo.options[selectInsumo.selectedIndex];
+            const unidadeBase = optionSelecionada.getAttribute('data-unidade');
+
+            selectUnidade.innerHTML = '';
+            if (unidadeBase) {
+                const opcoes = obterOpcoesUnidade(unidadeBase);
+                opcoes.forEach(op => {
+                    const option = document.createElement('option');
+                    option.value = op.fator;
+                    option.text = op.nome;
+                    selectUnidade.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = 1;
+                option.text = '...';
+                selectUnidade.appendChild(option);
+            }
+            calcularQtdReal(selectInsumo);
+        }
+
+        function calcularQtdReal(elemento) {
+            const linha = elemento.closest('.gasto-item');
+            const inputVisual = linha.querySelector('.input-visual-qtd');
+            const selectUnidade = linha.querySelector('.select-unidade-aux');
+            const inputReal = linha.querySelector('.input-real-qtd');
+
+            const qtdVisual = parseFloat(inputVisual.value) || 0;
+            const fator = parseFloat(selectUnidade.value) || 1;
+
+            let valorFinal = (qtdVisual * fator);
+            // Evita notação científica para valores muito pequenos
+            inputReal.value = valorFinal.toFixed(6).replace(/\.?0+$/, "");
+            if(inputReal.value === "0") inputReal.value = "0.000000"; // garante que envie zero numérico se for o caso
+        }
+
         function reindexarGastos() {
             const items = container.getElementsByClassName('gasto-item');
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
-                const select = item.querySelector('select');
-                const input = item.querySelector('input[type="number"]');
-                select.name = `gastos[${i}].insumoId`;
-                input.name = `gastos[${i}].quantidadeGasta`;
+                // Atualiza names para o Spring binding
+                item.querySelector('.select-insumo').name = `gastos[${i}].insumoId`;
+                item.querySelector('.input-real-qtd').name = `gastos[${i}].quantidadeGasta`;
+
+                // Ajusta ids/names dos erros se necessário (opcional, Thymeleaf já renderizou, mas para novos itens ajuda)
             }
         }
 
-        // 💡 FUNÇÃO ATUALIZADA COM CLASSES BOOTSTRAP
         function adicionarGasto() {
             const proximoIndice = container.getElementsByClassName('gasto-item').length;
             const novoItem = document.createElement('div');
-            // Aplicando classes de Grid do Bootstrap
-            novoItem.className = 'row g-2 align-items-end mb-2 gasto-item';
+            novoItem.className = 'row g-2 align-items-start mb-2 gasto-item';
 
             let optionsHtml = '<option value="">Selecione...</option>';
-            insumos.forEach(insumo => {
-                const precoFormatado = insumo.precoPorUnidade.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-                optionsHtml += `<option value="${insumo.id}">
-                                    ${insumo.nome} (R$ ${precoFormatado} / ${insumo.unidadeDeMedida})
+            insumosDados.forEach(ins => {
+                const precoFmt = ins.precoPorUnidade.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                optionsHtml += `<option value="${ins.id}" data-unidade="${ins.unidadeDeMedida}">
+                                    ${ins.nome} (Base: ${ins.unidadeDeMedida})
                                 </option>`;
             });
 
-            // 💡 HTML ATUALIZADO com classes de Grid e Formulário
+            // HTML simplificado para novo item (sem mensagens de erro iniciais)
             novoItem.innerHTML = `
-                <div class="col-md-6">
+                <input type="hidden" name="gastos[${proximoIndice}].quantidadeGasta" class="input-real-qtd" value="0">
+
+                <div class="col-md-5">
                     <label class="form-label">Insumo:</label>
-                    <select name="gastos[${proximoIndice}].insumoId" class="form-select" required>
+                    <select name="gastos[${proximoIndice}].insumoId" class="form-select select-insumo" onchange="atualizarUnidades(this)" required>
                         ${optionsHtml}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Qtd:</label>
-                    <input type="number" step="0.001" min="0" name="gastos[${proximoIndice}].quantidadeGasta" class="form-control" required />
-                </div>
+
                 <div class="col-md-2">
+                    <label class="form-label">Qtd. Visual:</label>
+                    <input type="number" step="0.001" min="0" class="form-control input-visual-qtd" oninput="calcularQtdReal(this)" required />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Unidade:</label>
+                    <select class="form-select select-unidade-aux" onchange="calcularQtdReal(this)">
+                        <option value="1">Selecione o insumo...</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 align-self-center mt-3">
                     <button type="button" class="btn btn-danger w-100" onclick="removerGasto(this)">X</button>
                 </div>
             `;
@@ -146,13 +253,22 @@
         }
 
         function removerGasto(botao) {
-            const itemParaRemover = botao.closest('.gasto-item');
-            itemParaRemover.remove();
+            const item = botao.closest('.gasto-item');
+            item.remove();
             reindexarGastos();
         }
 
+        // Inicializa unidades para itens que vieram do servidor (edição ou erro de validação)
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectsExistentes = document.querySelectorAll('.select-insumo');
+            selectsExistentes.forEach(sel => {
+                if (sel.value) {
+                    atualizarUnidades(sel);
+                }
+            });
+        });
+
         addButton.addEventListener('click', adicionarGasto);
-        document.addEventListener('DOMContentLoaded', reindexarGastos);
 
     </script>
 </section>

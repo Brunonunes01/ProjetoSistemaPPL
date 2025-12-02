@@ -5,79 +5,157 @@
 
 <section layout:fragment="content">
 
-    <h1 class="mb-4" th:text="${titulo}"></h1>
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
 
-    <div class="row g-4">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-primary"><i class="bi bi-graph-up-arrow"></i> Otimizador de Lucro</h1>
+                <p class="lead text-muted">Defina a disponibilidade dos seus insumos e descubra qual a melhor combinação de serviços para maximizar seu ganho.</p>
+            </div>
 
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">1. Insira seus Limites de Recursos</h2>
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <h2 class="h5 mb-0 text-primary"><i class="bi bi-sliders"></i> 1. Disponibilidade de Recursos</h2>
+                            <p class="small text-muted mt-1">Quais recursos são escassos?</p>
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/otimizar}" method="post" th:object="${requestForm}" id="form-otimizacao">
+
+                                <div th:if="${#lists.isEmpty(insumos)}" class="alert alert-warning">
+                                    Nenhum insumo cadastrado. <a href="/insumos/novo">Cadastre insumos</a> primeiro.
+                                </div>
+
+                                <div class="list-group list-group-flush mb-4">
+                                    <div class="list-group-item px-0 py-3" th:each="insumo, stat : ${insumos}">
+
+                                        <input type="hidden" th:field="*{limites[__${stat.index}__].insumoId}"/>
+
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="fw-bold mb-0" th:for="${'limite' + stat.index}"
+                                                   th:text="${insumo.nome}">Mão de Obra</label>
+
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input toggle-limite" type="checkbox"
+                                                       th:id="${'check' + stat.index}"
+                                                       th:checked="${requestForm.limites[__${stat.index}__].totalDisponivel != null}"
+                                                       onchange="toggleInput(this)">
+                                                <label class="form-check-label small text-muted" th:for="${'check' + stat.index}">Limitar?</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="input-group input-group-container" style="display: none;">
+                                            <input type="number" th:id="${'limite' + stat.index}" class="form-control input-valor"
+                                                   th:field="*{limites[__${stat.index}__].totalDisponivel}"
+                                                   step="0.01" min="0" placeholder="0.00"/>
+                                            <span class="input-group-text bg-light text-secondary" th:text="${insumo.unidadeDeMedida}">Horas</span>
+                                        </div>
+
+                                        <div class="text-success small fst-italic texto-ilimitado">
+                                            <i class="bi bi-infinity"></i> Recurso Ilimitado
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 btn-lg mb-2" th:unless="${#lists.isEmpty(insumos)}">
+                                    <i class="bi bi-calculator"></i> Calcular Plano Ideal
+                                </button>
+
+                                <a href="/otimizador" class="btn btn-outline-secondary w-100 btn-sm" th:if="${resposta != null}">
+                                    Nova Simulação
+                                </a>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form th:action="@{/otimizar}" method="post" th:object="${requestForm}">
 
-                        <div th:each="insumo, stat : ${insumos}">
-                            <input type="hidden" th:field="*{limites[__${stat.index}__].insumoId}"/>
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 h-100 bg-light" th:if="${resposta == null}">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center text-center text-muted p-5">
+                            <i class="bi bi-lightbulb fs-1 mb-3"></i>
+                            <h5>Aguardando Dados</h5>
+                            <p>Preencha os limites ao lado e clique em calcular para ver a mágica acontecer.</p>
+                        </div>
+                    </div>
 
-                            <div class="mb-3">
-                                <label class="form-label" th:for="${'limite' + stat.index}"
-                                       th:text="${'Total de ' + insumo.nome + ' (' + insumo.unidadeDeMedida + ')'}">
-                                    Total de Mão de Obra (Horas)
-                                </label>
-                                <input type="number" th:id="${'limite' + stat.index}" class="form-control"
-                                       th:field="*{limites[__${stat.index}__].totalDisponivel}"
-                                       step="0.1" min="0" placeholder="Deixe em branco se for ilimitado"/>
+                    <div class="card shadow border-success h-100" th:if="${resposta != null}">
+                        <div class="card-header bg-success text-white">
+                            <h2 class="h5 mb-0"><i class="bi bi-check-circle-fill"></i> 2. Resultado da Otimização</h2>
+                        </div>
+                        <div class="card-body">
+
+                            <div th:if="${resposta.mensagem}"
+                                 th:class="${resposta.lucroMaximo != null} ? 'alert alert-success' : 'alert alert-danger'">
+                                <i class="bi" th:classappend="${resposta.lucroMaximo != null} ? 'bi-emoji-smile' : 'bi-exclamation-triangle'"></i>
+                                <span th:text="${resposta.mensagem}"></span>
                             </div>
-                        </div>
 
-                        <hr>
-                        <button type="submit" class="btn btn-primary w-100 btn-lg">Calcular Plano Ideal</button>
-                    </form>
-                </div>
-            </div>
-        </div>
+                            <div th:if="${resposta.lucroMaximo != null}" class="text-center my-4">
+                                <p class="text-muted text-uppercase small letter-spacing-1 mb-1">Lucro Máximo Estimado</p>
+                                <h3 class="display-4 fw-bold text-success"
+                                    th:text="${'R$ ' + #numbers.formatDecimal(resposta.lucroMaximo, 1, 'POINT', 2, 'COMMA')}">
+                                    R$ 8.500,00
+                                </h3>
+                            </div>
 
-        <div class="col-lg-6" th:if="${resposta != null}">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">2. Resultado da Otimização</h2>
-                </div>
-                <div class="card-body">
+                            <div th:if="${resposta.planoIdeal != null && !resposta.planoIdeal.isEmpty()}">
+                                <h6 class="border-bottom pb-2 mb-3">Plano de Produção Sugerido:</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0"
+                                        th:each="item : ${resposta.planoIdeal}">
 
-                    <div th:if="${resposta.lucroMaximo != null}">
-                        <div class="alert alert-success">
-                            <p class="h6 mb-0" th:text="${resposta.mensagem}">Solução ótima encontrada!</p>
-                        </div>
+                                        <span class="fw-medium" th:text="${item.nomeServico}">Limpeza de Sofá</span>
 
-                        <p class="text-muted mb-1">O lucro máximo estimado é:</p>
-                        <p class="h2 text-success fw-bold mb-3"
-                           th:text="${'R$ ' + #numbers.formatDecimal(resposta.lucroMaximo, 1, 'COMMA', 2, 'POINT')}">
-                            R$ 8.500,00
-                        </p>
+                                        <span class="badge bg-primary rounded-pill fs-6 px-3 py-2">
+                                            <span th:text="${item.quantidadeArredondada}">10</span>
+                                            <span class="fw-light ms-1">unid.</span>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
 
-                        <h3 class="h5">Plano de Produção Ideal:</h3>
-                        <ul class="list-group">
-                            <li class="list-group-item" th:each="item : ${resposta.planoIdeal}"
-                                th:text="${item.nomeServico + ': ' + item.quantidadeArredondada + ' unidades'}">
-                                Limpeza de Sofá: 10 unidades
-                            </li>
-                            <li class="list-group-item list-group-item-light" th:if="${resposta.planoIdeal.isEmpty()}">
-                                Nenhum serviço é lucrativo com as restrições dadas.
-                            </li>
-                        </ul>
-                    </div>
+                            <div th:if="${resposta.lucroMaximo != null && (resposta.planoIdeal == null || resposta.planoIdeal.isEmpty())}" class="text-center mt-4 text-muted">
+                                <p>Nenhum serviço é viável com as restrições atuais.</p>
+                            </div>
 
-                    <div th:if="${resposta.mensagem != null && resposta.lucroMaximo == null}">
-                        <div class="alert alert-danger">
-                            <p class="fw-bold mb-0" th:text="${resposta.mensagem}">
-                                Erro: Solução impossível.
-                            </p>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
+    </div>
 
-    </div> </section>
+    <script>
+        function toggleInput(checkbox) {
+            // Acha o container pai da linha atual
+            const container = checkbox.closest('.list-group-item');
+            const inputGroup = container.querySelector('.input-group-container');
+            const textIlimitado = container.querySelector('.texto-ilimitado');
+            const inputValor = container.querySelector('.input-valor');
+
+            if (checkbox.checked) {
+                // Modo Limitado: Mostra input, esconde texto "Ilimitado"
+                inputGroup.style.display = 'flex';
+                textIlimitado.style.display = 'none';
+                // Foca no input para facilitar a digitação
+                setTimeout(() => inputValor.focus(), 100);
+            } else {
+                // Modo Ilimitado: Esconde input, mostra texto, limpa valor
+                inputGroup.style.display = 'none';
+                textIlimitado.style.display = 'block';
+                inputValor.value = ''; // Envia null/empty pro backend, que trata como infinito
+            }
+        }
+
+        // Inicializa o estado visual ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkboxes = document.querySelectorAll('.toggle-limite');
+            checkboxes.forEach(chk => toggleInput(chk));
+        });
+    </script>
+
+</section>
 </html>

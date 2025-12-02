@@ -12,37 +12,68 @@
                     <h1 class="h4 mb-0" th:text="${titulo}"></h1>
                 </div>
                 <div class="card-body">
-                    <form th:action="@{/insumos/salvar}" method="post" th:object="${insumo}">
+
+                    <div th:if="${erro}" class="alert alert-danger">
+                        <span th:text="${erro}"></span>
+                    </div>
+
+                    <form th:action="@{/insumos/salvar}" method="post" th:object="${insumo}" novalidate>
 
                         <input type="hidden" th:field="*{id}"/>
 
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome do Insumo:</label>
-                            <input type="text" id="nome" class="form-control" th:field="*{nome}"
+                            <input type="text" id="nome"
+                                   th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid' : ''"
+                                   class="form-control" th:field="*{nome}"
                                    placeholder="Ex: Produto Limpador X"/>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="unidadeDeMedida" class="form-label">Unidade de Medida:</label>
-                            <select id="unidadeDeMedida" class="form-select" th:field="*{unidadeDeMedida}">
+                            <label for="unidadeDeMedida" class="form-label">Unidade de Medida (Base de Cálculo):</label>
+                            <select id="unidadeDeMedida"
+                                    th:classappend="${#fields.hasErrors('unidadeDeMedida')} ? 'is-invalid' : ''"
+                                    class="form-select" th:field="*{unidadeDeMedida}">
                                 <option value="">Selecione a unidade...</option>
                                 <option th:each="unidade : ${unidades}"
                                         th:value="${unidade}"
                                         th:text="${unidade}">Litro
                                 </option>
                             </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('unidadeDeMedida')}" th:errors="*{unidadeDeMedida}"></div>
+                            <div class="form-text text-muted small">
+                                Esta será a unidade usada para calcular o custo nos serviços.
+                            </div>
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label for="precoRecipiente" class="form-label" id="labelPreco">Preço do Recipiente (R$):</label>
-                                <input type="number" id="precoRecipiente" class="form-control" th:field="*{precoRecipiente}"
+                                <label for="precoRecipiente" class="form-label" id="labelPreco">Preço Pago (R$):</label>
+                                <input type="number" id="precoRecipiente"
+                                       th:classappend="${#fields.hasErrors('precoRecipiente')} ? 'is-invalid' : ''"
+                                       class="form-control input-calculo" th:field="*{precoRecipiente}"
                                        step="0.01" min="0" placeholder="Ex: 130.00"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('precoRecipiente')}" th:errors="*{precoRecipiente}"></div>
                             </div>
+
                             <div class="col-md-6">
-                                <label for="quantidadeRecipiente" class="form-label" id="labelQtd">Qtd. no Recipiente:</label>
-                                <input type="number" id="quantidadeRecipiente" class="form-control" th:field="*{quantidadeRecipiente}"
-                                       step="0.001" min="0" placeholder="Ex: 5"/>
+                                <label for="quantidadeRecipiente" class="form-label" id="labelQtd">Quantidade Total:</label>
+                                <input type="number" id="quantidadeRecipiente"
+                                       th:classappend="${#fields.hasErrors('quantidadeRecipiente')} ? 'is-invalid' : ''"
+                                       class="form-control input-calculo" th:field="*{quantidadeRecipiente}"
+                                       step="0.0001" min="0" placeholder="Ex: 5"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('quantidadeRecipiente')}" th:errors="*{quantidadeRecipiente}"></div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                            <i class="bi bi-calculator fs-4 me-3"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">Preço Final por Unidade:</h6>
+                                <p class="mb-0 fw-bold fs-5" id="preview-resultado">
+                                    Preencha os valores acima...
+                                </p>
                             </div>
                         </div>
 
@@ -62,45 +93,74 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const selectUnidade = document.getElementById('unidadeDeMedida');
+            const inputPreco = document.getElementById('precoRecipiente');
+            const inputQtd = document.getElementById('quantidadeRecipiente');
             const labelPreco = document.getElementById('labelPreco');
             const labelQtd = document.getElementById('labelQtd');
-            const inputQtd = document.getElementById('quantidadeRecipiente');
+            const previewResultado = document.getElementById('preview-resultado');
 
-            // 💡 AQUI ESTÁ A CORREÇÃO: Lista completa de unidades unitárias
+            // Unidades que são "1 por 1" (Unitárias)
             const unidadesUnitarias = ['Hora', 'Minuto', 'kWh', 'Unidade(s)', 'km'];
 
-            function atualizarFormulario() {
-                const unidadeSelecionada = selectUnidade.value;
+            function calcularPrecoUnitario() {
+                const preco = parseFloat(inputPreco.value);
+                const qtd = parseFloat(inputQtd.value);
+                const unidade = selectUnidade.value || 'Unidade';
 
-                if (unidadesUnitarias.includes(unidadeSelecionada)) {
-                    // Limpa o "(s)" ou "(metro cúbico)" para o rótulo ficar bonito
-                    const unidadeLimpa = unidadeSelecionada.split(' ')[0].replace('(s)', '');
+                // Limpa unidade de textos extras (ex: "m³ (metro cúbico)" vira "m³")
+                const unidadeLimpa = unidade.split(' ')[0];
 
-                    labelPreco.textContent = `Custo por ${unidadeLimpa} (R$):`;
-                    labelQtd.textContent = `Quantidade de ${unidadeLimpa}s:`;
+                if (!isNaN(preco) && !isNaN(qtd) && qtd > 0) {
+                    const precoUnitario = preco / qtd;
 
-                    inputQtd.value = '1';
-                    inputQtd.readOnly = true;
-                    inputQtd.style.backgroundColor = '#e9ecef';
+                    // Formata para moeda BRL
+                    const formatado = precoUnitario.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 4
+                    });
+
+                    previewResultado.innerHTML = `O sistema calculará: <span class="text-primary">${formatado}</span> por <span class="fw-bold">${unidadeLimpa}</span>`;
+                    previewResultado.classList.remove('text-muted');
                 } else {
-                    // Caso padrão (Litro, kg, ml, g, m³)
-                    labelPreco.textContent = 'Preço do Recipiente (R$):';
-                    labelQtd.textContent = 'Qtd. no Recipiente:';
-
-                    inputQtd.readOnly = false;
-                    inputQtd.style.backgroundColor = '#fff';
-
-                    const idInput = document.querySelector('input[name="id"]');
-                    if (!idInput || !idInput.value) {
-                         if (inputQtd.value === '1') {
-                            inputQtd.value = '';
-                         }
-                    }
+                    previewResultado.innerHTML = "Preencha preço e quantidade para ver o custo unitário.";
+                    previewResultado.classList.add('text-muted');
                 }
             }
 
-            atualizarFormulario();
-            selectUnidade.addEventListener('change', atualizarFormulario);
+            function atualizarLabelsInputs() {
+                const unidadeSelecionada = selectUnidade.value;
+                const unidadeLimpa = unidadeSelecionada.split(' ')[0].replace('(s)', '');
+
+                if (unidadesUnitarias.includes(unidadeSelecionada)) {
+                    // Lógica Unitária
+                    labelPreco.textContent = `Custo por ${unidadeLimpa} (R$):`;
+                    labelQtd.textContent = `Quantidade (Sempre 1):`;
+
+                    if(document.activeElement !== inputQtd) {
+                        inputQtd.value = '1';
+                    }
+                    inputQtd.readOnly = true;
+                    inputQtd.style.backgroundColor = '#e9ecef';
+                } else {
+                    // Lógica Padrão (Litro, m³, kg)
+                    labelPreco.textContent = 'Preço do Recipiente (R$):';
+                    labelQtd.textContent = `Qtd. no Recipiente (${unidadeLimpa}):`; // Mostra a unidade no label
+
+                    inputQtd.readOnly = false;
+                    inputQtd.style.backgroundColor = '#fff';
+                }
+                calcularPrecoUnitario();
+            }
+
+            // Event Listeners
+            selectUnidade.addEventListener('change', atualizarLabelsInputs);
+            inputPreco.addEventListener('input', calcularPrecoUnitario);
+            inputQtd.addEventListener('input', calcularPrecoUnitario);
+
+            // Inicializa na carga da página (para edições)
+            atualizarLabelsInputs();
         });
     </script>
 </section>
